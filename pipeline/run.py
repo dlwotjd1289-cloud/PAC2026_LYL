@@ -50,6 +50,7 @@ from virtual_data.scenario_source import load_dataset, run_generator  # noqa: E4
 
 from .depth_camera import CameraSpec  # noqa: E402
 from .depth_perception import DepthPerception  # noqa: E402
+from .dashboard_export import export_order, run_id_for  # noqa: E402
 
 PROFILE = REPO / "config/jaesung_taehyeon"
 
@@ -125,7 +126,7 @@ def perception_summary(records, stream):
     }
 
 
-def run_order(spec, index, ds, cfg, configs, out_dir):
+def run_order(spec, index, ds, cfg, configs, out_dir, dashboard=None):
     cc, hl, la, rt, vc = configs
     c = cfg["cell"]
     decisions, snapshots, pending, holder = [], [], {}, []
@@ -204,6 +205,11 @@ def run_order(spec, index, ds, cfg, configs, out_dir):
     row["evaluation"] = evals
     row["offline_evaluation_s"] = round(time.perf_counter() - t0, 3)
     write(out_dir / f"{spec.scenario_id}.json", row)
+    if dashboard:
+        row["dashboard_run"] = str(export_order(
+            row, run_id_for(spec.scenario_id, dashboard), {f.truth.box_id: (f.truth.size.x, f.truth.size.y,
+                                                                             f.truth.size.z) for f in cell.stream},
+            start_epoch=time.time() - row["wall_s"]))
     return row
 
 
@@ -254,6 +260,8 @@ def main(argv=None):
     ap.add_argument("--boxes", type=int, help="override generator.boxes_per_scenario")
     ap.add_argument("--per-family", type=int, help="override generator.sample_per_family")
     ap.add_argument("--wall-limit", type=int, help="override run.order_wall_limit_s")
+    ap.add_argument("--no-dashboard", action="store_true",
+                    help="do not write logs/pipeline/<run> nor register it with the dashboard")
     args = ap.parse_args(argv)
     cfg = load_pipeline_config(args.config)
     if args.boxes:
@@ -278,9 +286,12 @@ def main(argv=None):
     lines = []
     for index, spec in chosen:
         print(f"[order] {spec.scenario_id} {spec.family} boxes={len(spec.arrivals)}", flush=True)
-        row = run_order(spec, index, ds, cfg, configs, out / "orders")
+        row = run_order(spec, index, ds, cfg, configs, out / "orders",
+                        dashboard=None if args.no_dashboard else meta["created_utc"])
         lines.append(order_line(row))
         print("        " + json.dumps(lines[-1], ensure_ascii=False), flush=True)
+        if row.get("dashboard_run"):
+            print(f"        dashboard run: {row['dashboard_run']} (active)", flush=True)
         report(lines, out, meta)
     print(f"report: {out / 'summary.md'}")
 

@@ -87,7 +87,7 @@ def test_queued_box_upstream_is_split_off():
 
 
 def test_end_to_end_tiny_order(tmp_path):
-    main(["--output", str(tmp_path), "--boxes", "8", "--per-family", "1", "--ids", "S0001"])
+    main(["--output", str(tmp_path), "--boxes", "8", "--per-family", "1", "--ids", "S0001", "--no-dashboard"])
     summary = json.loads((tmp_path / "summary.json").read_text())
     (line,) = summary["orders"]
     assert line["status"] == "complete" and line["arrived"] == line["placed"] + line["inspection"]

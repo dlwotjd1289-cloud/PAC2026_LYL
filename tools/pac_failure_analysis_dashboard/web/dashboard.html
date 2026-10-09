@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AHEAD · Gazebo Live Workcell</title>
+<style>
+:root{color-scheme:dark;--bg:#091015;--panel:rgba(13,22,30,.91);--panel2:rgba(22,35,46,.82);--line:rgba(145,192,218,.18);--text:#ecf7ff;--muted:#9eafbe;--cyan:#55d9fa;--green:#65e2ad;--amber:#ffd28a;--red:#ff818d;--radius:14px}
+*{box-sizing:border-box}
+html,body,#app{height:100%;width:100%;margin:0;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.48;font-size:13px}
+button,textarea{font:inherit}button{cursor:pointer}button:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.glass{border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-radius:var(--radius);box-shadow:0 12px 38px rgba(0,0,0,.31)}
+#app{position:relative;isolation:isolate}
+.scene-stage{position:absolute;inset:0;z-index:0;background:radial-gradient(ellipse at 38% 38%,#1e3442 0%,#111e29 36%,#071019 90%)}
+#viewer3d{position:absolute;inset:0;height:100%;width:100%;touch-action:pan-y;background:transparent}
+#viewer3d .main-svg{background:transparent!important}
+.stage-vignette{position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,13,20,.45),transparent 24%,transparent 72%,rgba(7,13,20,.5)),linear-gradient(0deg,rgba(5,12,19,.55),transparent 18%,transparent 85%,rgba(5,12,19,.22));pointer-events:none}
+.grid-shimmer{position:absolute;inset:0;opacity:.075;pointer-events:none;background-image:linear-gradient(rgba(116,198,223,.4) 1px,transparent 1px),linear-gradient(90deg,rgba(116,198,223,.4) 1px,transparent 1px);background-size:80px 80px;mask-image:linear-gradient(0deg,black,transparent 70%)}
+.title-panel{position:absolute;z-index:12;top:20px;left:22px;padding:17px 19px;width:min(415px,calc(100% - 425px));min-width:300px}
+.eyebrow{font-size:10px;letter-spacing:.19em;font-weight:850;color:var(--cyan)}h1{font-size:20px;letter-spacing:-.02em;line-height:1.28;margin:5px 0 6px;font-weight:780}h2,h3{margin:0}.subtitle{color:var(--muted);font-size:11px}.title-line{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:13px;border-top:1px solid var(--line);padding-top:11px;color:var(--muted);font-size:10px}.small-label{font-size:10px;letter-spacing:.075em;font-weight:760;text-transform:uppercase}.live-pill{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(111,214,242,.26);padding:6px 10px;color:#b3eaf3;border-radius:100px;background:rgba(51,123,144,.10);font-weight:700;font-size:10px}.sync-dot{width:7px;height:7px;flex:none;border-radius:50%;background:#6b8094;box-shadow:0 0 0 3px rgba(100,150,190,.08)}.sync-dot.online{background:var(--green);box-shadow:0 0 0 3px rgba(101,226,173,.15),0 0 14px rgba(101,226,173,.7)}.sync-dot.offline{background:var(--amber)}
+.stage-tools{position:absolute;z-index:11;bottom:87px;left:23px;padding:12px 13px 13px;min-width:min(450px,calc(100vw - 48px))}.tools-heading{font-size:10px;color:#a5d4e0;letter-spacing:.13em;font-weight:800;margin-bottom:9px}.viewer3d-tools{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.viewer3d-tools button,.side-action,.panel-toggle{color:#d5eff9;padding:9px 11px;border-radius:8px;background:rgba(35,70,87,.65);border:1px solid rgba(128,195,217,.18);font-size:11px;font-weight:730}.viewer3d-tools button:hover,.side-action:hover,.panel-toggle:hover{background:rgba(51,115,139,.8);border-color:rgba(88,216,255,.55)}.viewer3d-tools button.primary{background:rgba(27,133,158,.42);border-color:rgba(67,209,243,.55);color:white}
+#viewer3d-status{font-size:10px;color:#bde8f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;padding:4px 0 8px;max-width:360px}
+.bottom-info{position:absolute;z-index:11;left:23px;bottom:19px;min-height:50px;padding:10px 14px;display:flex;align-items:center;gap:15px;max-width:calc(100% - 430px);color:var(--muted);font-size:10px;white-space:nowrap}.bottom-info b{color:white}.bottom-info #viewer3d-selection{color:#80dbf7;overflow:hidden;text-overflow:ellipsis;max-width:360px;margin:0}.hint{white-space:nowrap}
+.stage-tag{position:absolute;z-index:10;top:24px;left:455px;display:flex;align-items:center;gap:7px;color:#a2cfe0;font-size:10px;letter-spacing:.05em;padding:9px 12px;border:1px solid var(--line);background:rgba(11,26,36,.72);border-radius:8px}.stage-tag:before{content:'';background:#53d9ee;width:6px;height:6px;border-radius:50%}
+.side{position:absolute;right:16px;top:15px;bottom:16px;width:357px;z-index:12;display:flex;flex-direction:column;gap:10px;overflow:hidden;transition:transform .26s ease,opacity .26s ease}
+.side-scroll>.glass{flex-shrink:0}.side-scroll{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-color:rgba(91,150,169,.38) transparent;scrollbar-width:thin;padding-right:1px;display:flex;flex-direction:column;gap:10px}
+.side-heading{padding:14px 14px 13px;display:flex;align-items:center;justify-content:space-between;gap:10px}.side-heading h2{font-size:13px;margin-bottom:3px}.side-heading .subtitle{font-size:10px}
+.status-card,.card{overflow:hidden}.section-title{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--line);background:rgba(33,57,71,.28);font-size:10px;font-weight:850;letter-spacing:.085em;color:#e8faff}.panel-body{padding:13px}.notice,.muted,small{color:var(--muted)}.tiny{font-size:11px}.quiet{font-size:10px;color:var(--muted)}.badge{display:inline-flex;align-items:center;border:1px solid var(--line);padding:4px 8px;border-radius:100px;color:#c8e0ea;background:rgba(255,255,255,.035);font-size:10px;font-weight:700;max-width:100%;overflow:hidden;text-overflow:ellipsis}.text-inline{display:flex;justify-content:space-between;gap:12px;align-items:center}.text-inline h2{font-size:12px}
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin:11px 0 10px}.stat{background:rgba(5,18,27,.65);border:1px solid rgba(153,213,240,.10);padding:10px 10px 9px;border-radius:9px;min-height:70px}.stat span{color:#93aec0;font-size:10px;display:block}.stat strong{display:block;font-size:19px;line-height:1.3;font-variant-numeric:tabular-nums;margin-top:3px;letter-spacing:-.035em}.stat small{color:#8ca6b6;font-size:9px}.healthbar{display:flex;align-items:center;justify-content:space-between;gap:8px;border-radius:7px;padding:7px 10px;background:rgba(53,114,133,.13);border:1px solid rgba(83,174,194,.19);font-size:10px;color:#cbe6ee}.health-label{display:flex;align-items:center;gap:8px;font-weight:700}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:11px}.fact{padding:9px;border-radius:8px;background:rgba(6,17,25,.63);min-width:0}.fact strong{display:block;font-size:11px;margin-top:4px;word-break:break-word;line-height:1.3}.fact small{font-size:10px}.run-id{font-size:11px;word-break:break-word;padding:9px 13px 2px;color:#cfe7f4}
+.camera-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:11px}.camera-view{overflow:hidden;min-width:0}.camera-view h3{font-size:10px;font-weight:730;padding:0 0 7px;color:#cbdce7}.camera-screen{border:1px solid rgba(108,172,199,.25);border-radius:8px;background:repeating-linear-gradient(115deg,rgba(98,138,170,.035) 0 3px,transparent 3px 7px),#05121b;aspect-ratio:1.52;display:flex;align-items:center;justify-content:center;overflow:hidden}.camera-screen img{width:100%;height:100%;object-fit:contain;display:block}.camera-screen img[hidden]{display:none}.camera-screen:has(img:not([hidden])) .camera-empty{display:none}.camera-empty{color:#617d92;text-align:center;font-size:10px;line-height:1.5}.camera-info{font-size:9px;color:#89a2b4;margin-top:5px;line-height:1.3;overflow-wrap:anywhere}
+.alert{border-color:rgba(255,141,147,.26);background:linear-gradient(150deg,rgba(70,33,43,.58),rgba(18,27,36,.94))}.alert.old-event{border-color:rgba(226,194,124,.2);background:linear-gradient(155deg,rgba(63,49,38,.56),rgba(18,27,36,.94))}.alert-title{display:flex;align-items:center;gap:8px}.alarm-icon{width:9px;height:9px;border-radius:50%;background:var(--red);box-shadow:0 0 15px rgba(255,96,113,.42)}.alert.old-event .alarm-icon{background:var(--amber)}.alert pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;line-height:1.6;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin:11px 0 8px;max-height:95px;overflow:auto;color:#f0d5d4}.alert .muted{font-size:10px;word-break:break-word}.alert p{font-size:10px;margin:7px 0}.alert .section-title{background:rgba(168,84,99,.09)}
+details{border-top:1px solid rgba(145,192,218,.13)}details:first-child{border-top:0}summary{cursor:pointer;list-style:none;position:relative;padding:11px 15px;color:#d5eaf2;font-size:11px;font-weight:750}summary::-webkit-details-marker{display:none}summary:after{content:'⌄';position:absolute;right:15px;color:var(--muted);transition:transform .2s}details[open]>summary:after{transform:rotate(180deg)}.detail-content{padding:0 13px 12px;color:var(--muted);font-size:11px}.detail-content p{margin:6px 0}.data-table{width:100%;border-collapse:collapse;font-size:11px;font-variant-numeric:tabular-nums}.data-table td,.data-table th{border-bottom:1px solid rgba(160,191,210,.10);text-align:left;padding:5px 6px}.data-table td:nth-child(2){text-align:right}#entities-info{font-size:10px;max-height:110px;overflow-y:auto;color:#a2becd;margin-top:8px}#joints-wrap{max-height:160px;overflow:auto}#pose-canvas{display:block;width:100%;height:auto;border-radius:8px;background:#091321}
+.tracked-row{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:6px 2px;border-bottom:1px solid rgba(255,255,255,.07);font-size:10px}.tracked-row span:last-child{font-variant-numeric:tabular-nums;color:#8caebe}
+.evidence-list{max-height:320px;overflow:auto}.evidence-list details summary{font-size:10px;padding:9px 14px;line-height:1.35}.evidence-list pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:10px;font-size:10px;background:#091521;color:#a0b8c5}.section-action{border:1px solid rgba(98,202,223,.34);border-radius:8px;padding:7px 10px;background:#153745;color:#cff6ff;font-size:10px;cursor:pointer;margin:0 11px 10px}
+textarea{width:100%;resize:vertical;min-height:80px;max-height:220px;background:#0a1823;color:var(--text);border:1px solid rgba(145,192,218,.28);border-radius:8px;padding:10px;font-size:11px}button.action{background:var(--cyan);color:#073039;border:0;border-radius:8px;padding:9px 13px;font-size:11px;font-weight:800}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:9px;flex-wrap:wrap;margin-top:8px}.reply{border-top:1px solid var(--line);padding:11px 0;margin-top:11px;line-height:1.55}.reply h3{font-size:11px;color:var(--cyan);margin:9px 0 4px}.reply .question{color:var(--muted)}.reply li{margin:0 0 8px}.reply ul{padding-left:16px}.reply p,.reply li{white-space:pre-wrap;overflow-wrap:anywhere}.reply details pre{font-size:9px;max-height:200px;overflow:auto}.reply details summary{padding:7px 0}.source-disclosure{border:0}.source-disclosure summary{padding:8px 0 3px;color:#a0aeba;font-size:10px}.source-disclosure>div{max-height:100px;overflow:auto;overflow-wrap:anywhere;font-size:10px;color:#a2b6c2}
+.bottom-status{position:absolute;top:18px;left:450px;color:#b5d9e2;z-index:12}.floating-tool{position:absolute;z-index:15;right:385px;top:20px;font-size:11px}.floating-tool button{padding:8px 11px;border-radius:9px;border:1px solid rgba(126,196,211,.25);background:rgba(10,26,37,.84);color:#c5e5ed;font-weight:700}
+.side-collapsed .side{transform:translateX(calc(100% + 30px));opacity:0;pointer-events:none}.side-collapsed .floating-tool{right:18px}.side-collapsed .bottom-info{max-width:calc(100vw - 44px)}
+@media(max-width:1100px){.title-panel{min-width:270px;width:320px}.stage-tag{left:360px}.bottom-status{left:360px}.bottom-info{max-width:calc(100% - 410px)}.stage-tools{bottom:93px}}
+@media(max-width:810px){html,body,#app{min-height:100%;height:100%;overflow:hidden}.title-panel{top:12px;left:12px;width:calc(100% - 24px);min-width:0;padding:11px 13px}.title-panel h1{font-size:16px}.stage-tag{display:none}.side{right:10px;top:112px;bottom:86px;width:min(355px,calc(100% - 20px));}.stage-tools{left:12px;bottom:75px;min-width:auto;width:calc(100% - 24px);padding:9px}.viewer3d-tools{gap:5px}.viewer3d-tools button{padding:7px 8px}.bottom-info{bottom:12px;left:12px;width:calc(100% - 24px);max-width:none;padding:9px;gap:6px;min-height:37px;overflow:hidden}.bottom-info .hint{display:none}.floating-tool{top:76px;right:12px!important}.side-collapsed .side{transform:translateX(calc(100% + 20px))}.stage-tools{opacity:.93}}
+@media(prefers-reduced-motion:reduce){.side,.sync-dot,summary:after{transition:none!important}}
+
+.test-banner{padding:9px 12px;background:#674a24;border-bottom:1px solid rgba(255,220,157,.25);color:#fff3d4;font-size:11px;font-weight:800;line-height:1.5}
+.test-banner[hidden]{display:none!important}
+.alert.test-event{border-color:rgba(247,204,114,.48);background:linear-gradient(150deg,rgba(93,66,26,.75),rgba(21,36,48,.93))}
+.alert.test-event .alarm-icon{background:#ffce72;box-shadow:0 0 12px rgba(255,198,105,.4)}
+/* V5: clearer dusk-blue control room, full-view stage and ChatGPT-style question dock. */
+:root {--bg:#142c3d;--panel:rgba(16,35,49,.88);--panel2:rgba(30,57,74,.79);
+ --line:rgba(185,226,245,.25);--muted:#bed1dc;--text:#f2f9fe;--cyan:#7ee6ff}
+.scene-stage{background:radial-gradient(ellipse at 45% 35%,#3b6376 0%,#294d63 38%,#162f42 82%,#102435 100%)}
+.stage-vignette{background:linear-gradient(90deg,rgba(9,24,36,.16),transparent 30%,transparent 70%,rgba(10,26,38,.17)),linear-gradient(0deg,rgba(5,14,24,.26),transparent 28%);pointer-events:none}
+.grid-shimmer{opacity:.04}
+.glass{box-shadow:0 12px 34px rgba(4,20,31,.25)}
+.stage-tools{top:191px;bottom:auto;min-width:380px;max-width:490px}
+.bottom-info{bottom:178px;left:23px;max-width:calc(100vw - 420px)}
+.stage-tag{top:24px;left:455px}
+.stat{background:rgba(8,26,40,.44)}
+.side{bottom:13px}
+.assistant-dock{position:absolute;z-index:14;left:22px;right:395px;bottom:17px;
+ width:min(850px,calc(100vw - 435px));margin:0 auto;padding:11px 13px 9px;
+ background:rgba(17,37,53,.91);box-shadow:0 18px 55px rgba(4,17,26,.38);
+ border-color:rgba(153,227,248,.28);display:flex;flex-direction:column;gap:9px;max-height:min(44vh,420px)}
+.assistant-head,.assistant-head>div{display:flex;align-items:center;gap:9px}
+.assistant-head{justify-content:space-between;min-height:24px}
+.assistant-head strong{font-size:13px;letter-spacing:-.01em}.assistant-head small{font-size:10px;color:#a3bfce}
+.assistant-mark{color:#80e8fa;font-size:19px}.assistant-head .side-action{padding:5px 8px;font-size:10px}
+.chat-messages{display:none;flex:1;min-height:0;max-height:220px;overflow:auto;overscroll-behavior:contain;
+ scrollbar-width:thin;scrollbar-color:#558396 transparent;padding:3px 2px}
+.chat-messages:not(:empty){display:block}
+.chat-turn{display:flex;flex-direction:column;gap:8px;margin:8px 0 14px}
+.chat-user{border:1px solid rgba(130,209,240,.13);background:rgba(108,165,190,.17);
+ border-radius:16px 16px 4px 16px;padding:9px 12px;max-width:89%;align-self:flex-end;
+ white-space:pre-wrap;word-break:break-word;font-size:12px}
+.chat-assistant{background:rgba(13,33,49,.73);border:1px solid rgba(146,199,222,.16);
+ border-radius:4px 16px 16px 16px;padding:10px 12px;max-width:100%;word-break:break-word}
+.chat-meta{display:flex;align-items:center;gap:8px;font-size:10px;color:#b2c8d7}
+.chat-answer{margin:9px 0;line-height:1.65;font-size:12px;white-space:pre-wrap}
+.chat-evidence summary{font-size:10px;color:#8ecbd9;cursor:pointer}
+.chat-evidence-body{font-size:10px;white-space:pre-wrap;padding:8px 3px;color:#c8dfeb}
+.chat-evidence-body h3{font-size:11px;margin:9px 0 3px}
+.chat-evidence-body ul{padding-left:18px;margin:2px 0}
+.chat-evidence-body li{padding:2px 0;word-break:break-word}
+.chat-evidence-body pre{overflow:auto;max-height:150px;font-size:9px;color:#b9cbd3}
+.chat-composer{display:flex;align-items:flex-end;gap:9px;border:1px solid rgba(137,218,244,.36);
+ background:rgba(8,24,37,.76);border-radius:16px;padding:8px 9px 8px 13px}
+.chat-composer textarea{width:100%;min-height:39px;max-height:90px;resize:vertical;outline:none;
+ background:transparent;border:none;color:#f1fbff;line-height:1.5;font-size:13px;padding:6px 3px}
+.chat-composer textarea::placeholder{color:#adc3d2}
+.chat-composer button{border:0;border-radius:11px;padding:9px 13px;min-height:38px;
+ font-size:15px;color:#063044;font-weight:900;background:#77def0}
+.chat-composer button:hover{background:#a4f1fb}
+.assistant-foot{display:flex;justify-content:space-between;gap:8px;color:#adc5d1;font-size:9px}
+.assistant-foot span:last-child{text-align:right}
+.suggested-queries{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.suggested-queries button{white-space:nowrap;color:#c6eefa;background:rgba(48,113,144,.32);
+ border:1px solid rgba(129,219,246,.2);border-radius:100px;padding:6px 10px;font-size:10px}
+.suggested-queries button:hover{background:rgba(62,140,173,.45)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+body.side-collapsed .assistant-dock{right:22px;width:min(850px,calc(100vw - 44px))}
+@media (max-width:920px){
+ .title-panel{left:12px;top:12px;width:min(410px,calc(100vw - 24px));min-width:0}
+ .stage-tag{display:none}
+ .side{width:min(350px,calc(100vw - 24px));top:142px;right:12px;bottom:225px}
+ .side-scroll{display:none} .side-heading{padding:9px}
+ .stage-tools{top:140px;left:12px;min-width:0;width:330px;max-width:calc(100vw - 24px)}
+ .bottom-info{display:none}
+ .assistant-dock{left:12px;right:12px;bottom:12px;width:auto;max-height:40vh}
+ .assistant-foot span:last-child{display:none}
+}
+@media (max-width:540px){
+ .assistant-head small{display:none}.assistant-dock{max-height:45vh}
+ .stage-tools{top:142px;width:calc(100vw - 24px)}
+ .side{top:300px;bottom:205px;width:calc(100vw - 24px)}
+}
+
+
+.zone-stat-grid{padding:10px 12px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.zone-stat{padding:8px 5px;background:rgba(21,57,75,.55);border:1px solid rgba(157,214,241,.13);border-radius:8px;text-align:center}
+.zone-stat strong{display:block;font-size:18px;color:#ecf8ff}.zone-stat small{display:block;color:#b2cadb;font-size:9px}
+.zone-stat em{display:block;color:#819aaa;font-size:9px;font-style:normal;margin-top:3px}
+.zone-warning{padding:0 12px 9px;font-size:10px;color:#b5c9d8;line-height:1.5}
+.zone-box-list{padding:9px 11px;font-size:10px;max-height:200px;overflow-y:auto}
+.zone-box-list>div{padding:6px 4px;border-bottom:1px solid rgba(150,201,220,.1);color:#d7e7ef}
+</style>
+</head>
+<body>
+<div id="app">
+<section id="viewer3d-panel" class="scene-stage" aria-label="Gazebo 읽기 전용 3D 작업셀">
+ <div id="viewer3d" role="img" aria-label="Gazebo V4.6 월드와 ROS 관절 실측값으로 회전 확대 가능한 3D 작업셀"></div>
+ <div class="stage-vignette"></div><div class="grid-shimmer"></div>
+</section>
+<header class="glass title-panel">
+ <div class="eyebrow">PAC 2026 <span style="opacity:.48">/</span> INTELLION <span style="opacity:.48">/</span> AHEAD</div>
+ <h1>Live Gazebo Workcell</h1>
+ <div class="subtitle">HDR50-22 · Mixed Palletizing · Gazebo Simulation Observation</div>
+ <div class="title-line"><span class="live-pill"><span class="sync-dot offline" id="sync-dot"></span><span id="sync-label">Gazebo 동기화 확인 중</span></span><span>READ ONLY · 시뮬레이션만 관측</span></div>
+</header>
+<div class="stage-tag" id="hud-simulation">Gazebo 관측 상태 확인 중</div>
+<div class="floating-tool"><button type="button" id="toggle-side" aria-expanded="true" aria-controls="side">◧  상태 패널 접기</button></div>
+<section class="glass stage-tools" aria-label="3D 카메라 조작">
+ <div class="tools-heading">SCENE CONTROL <span style="color:#597c90;letter-spacing:0;margin-left:7px;font-weight:500">로봇 제어 명령 아님</span></div>
+ <div id="viewer3d-status" title="상태 확인 중">3D 렌더러 로딩 중…</div>
+ <div class="viewer3d-tools">
+  <button type="button" id="viewer3d-all" class="primary">⌗  전체 보기</button>
+  <button type="button" id="viewer3d-robot">로봇 확대</button>
+  <button type="button" id="viewer3d-pallet">팔레트</button>
+  <button type="button" id="viewer3d-pick">컨베이어</button>
+  <button type="button" id="fullscreen-btn">⛶  전체화면</button>
+ </div>
+</section>
+<footer class="glass bottom-info"><span class="hint"><b>Drag</b> 회전</span><span class="hint"><b>Scroll</b> 확대</span><span class="hint"><b>Right drag</b> 이동</span><span id="viewer3d-selection">Gazebo에서 관측되는 모델을 표시합니다. 카메라 조작만 허용합니다.</span></footer>
+<aside id="side" class="side" aria-label="작업셀 읽기 전용 실시간 상태와 실패 로그">
+ <div class="glass side-heading"><div><div class="eyebrow">OPERATIONS OVERVIEW</div><h2 style="margin-top:4px">작업셀 모니터</h2><div class="subtitle">ROS 2 / Gazebo · 시뮬레이션 관측</div></div><span id="connection" class="badge">연결 중</span></div>
+ <div class="side-scroll">
+ <section class="glass status-card" id="live-panel">
+  <div class="section-title">LIVE TELEMETRY <span class="badge" id="live-status">관측 대기</span></div>
+  <div class="panel-body">
+   <div class="healthbar"><div class="health-label"><span class="sync-dot offline" id="side-health-dot"></span><span>시뮬레이션 관측</span></div><span>선택 실행 월드</span></div>
+   <div class="stats-grid">
+     <div class="stat"><span>ROBOT JOINTS</span><strong id="metric-joints">—</strong><small>ROS 2 / joint_states</small></div>
+     <div class="stat"><span>TRACKED POSES</span><strong id="metric-entities">—</strong><small>이름 필터로 수집한 엔티티</small></div>
+     <div class="stat"><span>LAST DATA AGE</span><strong id="metric-delay">—</strong><small>최근 수신 경과 · 통신지연 아님</small></div>
+     <div class="stat"><span>CAMERA JPEG</span><strong id="metric-camera">0 / 2</strong><small>최신 영상 확인 / 2대</small></div>
+   </div>
+   <div class="notice tiny" id="live-detail">관측기 연결을 확인합니다.</div>
+   <details><summary>로봇 관절 및 컨트롤러 상세</summary><div class="detail-content"><p id="controller-info">컨트롤러 오차 미수신</p><div id="joints-wrap"><table class="data-table"><thead><tr><th>관절</th><th>관측 위치 (rad)</th></tr></thead><tbody id="joints"></tbody></table></div><p id="suction-info">흡착 상태 미확인</p></div></details>
+   <details><summary>Gazebo 관측 좌표 확인</summary><div class="detail-content"><canvas id="pose-canvas" width="760" height="310" aria-label="Gazebo 동적 위치 마커"></canvas><p>관측 좌표만 표시하며 충돌이나 안전 여부는 판정하지 않습니다.</p><div id="entities-info"></div></div></details>
+   <details><summary>최근 Gazebo 박스 관측</summary><div class="detail-content" id="tracked-boxes"><p class="muted tiny">박스 관측 대기 중</p></div></details>
+  </div>
+ </section>
+ <section class="glass"><div class="section-title">FIXED CAMERA FEED <span class="quiet">2 RGB CAMERAS</span></div>
+   <div class="camera-grid">
+    <div class="camera-view"><h3>CAM 01 · 계량대</h3><div class="camera-screen"><img id="camera-scale" hidden alt="실측 계량 카메라 화면"><span class="camera-empty">영상<br>미연결</span></div><div id="camera-scale-info" class="camera-info">ROS 이미지 미수신</div></div>
+    <div class="camera-view"><h3>CAM 02 · 작업셀</h3><div class="camera-screen"><img id="camera-cctv" hidden alt="실측 작업셀 카메라 화면"><span class="camera-empty">영상<br>미연결</span></div><div id="camera-cctv-info" class="camera-info">ROS 이미지 미수신</div></div>
+   </div>
+ </section>
+ <section id="alarm" class="glass alert"><div id="test-banner" class="test-banner" hidden>TEST ONLY · 계획 전용 IK 실패 진단 · 로봇 이동 없음 · 실제 적재 실패 아님</div><div class="section-title"><span class="alert-title"><span class="alarm-icon"></span> FAILURE HISTORY</span><span class="quiet">LOG ONLY</span></div>
+ <div class="panel-body"><h2 id="alarm-title" style="font-size:13px">실행 로그 확인 중</h2><pre id="alarm-text">기존 로그를 확인하고 있습니다.</pre><p class="muted" id="alarm-source"></p><p class="notice" id="alarm-stage">실패 단계 판정 대기</p>
+ <div class="toolbar"><button class="side-action" type="button" id="sidebar-analysis">로그 근거 보기</button><button type="button" class="side-action" id="analyze" disabled>실패 내용 질문 (로컬)</button></div>
+ <p class="notice">기록된 실패는 현재 Gazebo 오류와 별개입니다. API 없이 로컬 로그 질문을 사용할 수 있습니다.</p>
+ </div></section>
+ <section class="glass" id="box-integrity"><div class="section-title">ACTIVE RUN · BOX ZONES <span class="quiet" id="integrity-world">연결 대기</span></div>
+ <div class="zone-stat-grid" id="zone-stats"><p class="muted tiny">통합 실행 정보가 아직 없습니다.</p></div>
+ <div class="zone-warning" id="zone-warning">구역별 상태는 실측 좌표와 실행 기록을 분리해 표시합니다.</div>
+ <details><summary style="padding:8px 12px;font-size:11px;cursor:pointer">박스별 근거 및 불일치 펼치기</summary><div class="zone-box-list" id="zone-box-list"></div></details>
+ </section>
+ <section class="glass"><div class="section-title">RUN & DIAGNOSTIC <span class="quiet">EVIDENCE</span></div><div class="run-id" id="run">선택 기록 없음</div>
+ <div class="facts"><div class="fact"><small>로그 수정 후</small><strong id="age">미확인</strong></div><div class="fact"><small>LLM API</small><strong id="api">사용 보류</strong></div><div class="fact"><small>실제 로봇 정지</small><strong>미확인</strong></div><div class="fact"><small>흡착 상태</small><strong>미확인</strong></div></div>
+ <details id="diagnostics-details"><summary>실행 로그와 근거 펼치기</summary><div id="evidence" class="evidence-list"></div></details>
+ </section>
+ <section class="glass" style="padding:10px 13px"><div style="font-size:10px;color:#95adbb">ROS 관절·Gazebo 좌표만 동적으로 표시 · <strong style="color:#bfe8f0">별도 PyBullet 재현 없음</strong> · 그리퍼 카메라 없음</div>
+ <details class="source-disclosure"><summary>3D 형상 출처와 제한 사항</summary><div><div id="viewer3d-source">SDF 및 URDF/STL 형상 로드 중</div>관절 관측이 없으면 SRDF 홈 자세를 참고용으로 표시합니다. 현재 화면은 인증된 안전관제 시스템이 아닙니다.</div></details></section>
+ </div>
+</aside>
+<section id="assistant-dock" class="assistant-dock glass" aria-label="작업셀 로컬 진단 채팅">
+ <div class="assistant-head"><div><span class="assistant-mark">✦</span><strong>작업셀 어시스턴트</strong><small id="chat-mode">오프라인 · 근거 기반 답변</small></div>
+   <button type="button" id="new" class="side-action">↻ 새 대화</button></div>
+ <div id="responses" class="chat-messages" aria-live="polite" aria-label="질문 답변 기록"></div>
+ <div class="suggested-queries" id="suggested-queries">
+   <button type="button" data-local-question="마지막 적재는 왜 실패했어?">마지막 실패 원인</button>
+   <button type="button" data-local-question="현재 로봇 관절 상태 알려줘">로봇 관절 상태</button>
+   <button type="button" data-local-question="카메라 2대 영상 연결됐어?">카메라 연결</button>
+   <button type="button" data-local-question="현재 Gazebo 박스 위치 알려줘">박스 위치</button>
+ </div>
+ <form id="form" class="chat-composer">
+   <label for="question" class="sr-only">작업셀 상태 질문</label>
+   <textarea id="question" maxlength="2000" rows="1" required placeholder="이 작업셀에서 무엇을 확인할까요?" autocomplete="off"></textarea>
+   <button type="submit" id="send" aria-label="질문 보내기" title="질문 보내기">➤</button>
+ </form>
+ <div class="assistant-foot"><span id="request-status" role="status" aria-live="polite">API 키 불필요 · 로컬 진단 사용 가능</span><span>Enter 전송 · Shift+Enter 줄바꿈 · 명령 실행 안 함</span></div>
+</section>
+</div>
+<script src="/assets/plotly.min.js"></script>
+<script src="/assets/viewer3d.js"></script>
+<script src="/assets/viewer3d_three.js"></script>
+<script src="/assets/viewer3d_boot.js"></script>
+<script>
+
+const $=id=>document.getElementById(id);
+let sessionId='', latestContext=null, busy=false;
+const labels={ok:'답변 완료',insufficient_data:'추가 정보 필요',unavailable:'API 이용 불가',refused:'답변 거절',invalid_response:'답변 검증 실패',invalid_request:'입력 확인 필요',busy:'처리 중'};
+function el(tag,text,cls){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
+function items(parent,title,values){parent.append(el('h3',title));const ul=el('ul');for(const text of values.length?values:['없음 / 미확정'])ul.append(el('li',text));parent.append(ul);}
+function renderReply(r,q){
+ const box=el('article',undefined,'chat-turn');
+ const user=el('div',q,'chat-user');box.append(user);
+ const assistant=el('div',undefined,'chat-assistant');
+ const meta=el('div',undefined,'chat-meta');
+ meta.append(el('span',r.source==='claude'?'Claude API 답변':(r.source==='openai'?'OpenAI API 답변':'로컬 규칙 기반 · 읽기 전용'),'badge'),
+             el('span',labels[r.status]||r.status,'chat-result'));
+ assistant.append(meta,el('p',r.answer,'chat-answer'));
+ const facts=r.confirmed_facts||[],hypotheses=r.hypotheses||[],missing=r.missing_information||[];
+ const extras=el('details',undefined,'chat-evidence');
+ extras.append(el('summary',`근거 ${facts.length}건 · 가설 ${hypotheses.length}건 · 추가정보 ${missing.length}건`));
+ const body=el('div',undefined,'chat-evidence-body');
+ items(body,'확인된 로그 근거',facts.map(f=>'['+f.id+'] '+f.text+'\n출처: '+f.source));
+ items(body,'가설 · 사실 아님',hypotheses.map(h=>h.cause+'\n확인 방법: '+h.verification));
+ items(body,'추가 확인',(r.checks||[]).map(c=>c.what+' — '+c.why));
+ items(body,'미확인',missing);
+ body.append(el('p','대상 기록: '+(r.context?.run_id||'없음')+' · 로봇 명령: 미실행','notice'));
+ const json=el('details');json.append(el('summary','응답 JSON 원문'),el('pre',JSON.stringify(r,null,2)));body.append(json);
+ extras.append(body);assistant.append(extras);box.append(assistant);
+ $('responses').append(box);while($('responses').children.length>10)$('responses').firstElementChild.remove();
+ $('responses').scrollTop=$('responses').scrollHeight;
+}
+
+const zoneDisplay={conveyor:'컨베이어',scale:'계량대',pick:'PICK',pallet:'팔레트',buffer:'버퍼',ng:'NG'};
+function renderIntegration(info){
+ const root=$('zone-stats'),detail=$('zone-box-list'),warning=$('zone-warning');root.replaceChildren();detail.replaceChildren();
+ if(!info?.bound){$('integrity-world').textContent='미등록';
+   root.append(el('p','통합 실행 manifest 미등록 · 현재는 좌표만 볼 수 있습니다.','muted tiny'));
+   warning.textContent=info?.warnings?.join(' ')||'알고리즘 통합 시 활성 실행을 등록해야 구역별 검증이 가능합니다.';return;}
+ $('integrity-world').textContent=info.run_id+' / '+info.world;
+ for(const [key,title] of Object.entries(zoneDisplay)){
+   const registered=(info.configured_zones||[]).includes(key);
+   const z=info.zones?.[key]||{observed:0,executor_reported:0,discrepancy:0};
+   const card=el('div',undefined,'zone-stat');card.append(el('small',title),el('strong',registered?String(z.observed):'—'),
+     el('em',registered?`위치 관측 · 실행 기록 ${z.executor_reported}`:'구역 좌표 미등록'));root.append(card);
+ }
+ const boxes=info.boxes||[];
+ for(const b of boxes.slice(0,60)){
+   const zone=zoneDisplay[b.location.zone]||b.location.zone;
+   const detailText=`${b.id} · 위치 ${zone} (${b.location.basis}) · 실행기 ${b.process_status}`+
+     (b.event_reason?` · 사유: ${b.event_reason}`:'')+
+     (b.event_matches_location===false?' ⚠ 위치 불일치':'');
+   detail.append(el('div',detailText));
+ }
+ if(!boxes.length)detail.append(el('div','최신 Gazebo 위치로 검증된 박스 없음'));
+ const note=[...(info.warnings||[])];
+ if((info.reported_not_observed||[]).length)note.push('실행기 완료 기록만 있고 위치가 미관측인 박스: '+info.reported_not_observed.slice(0,8).join(', '));
+ if(boxes.some(b=>b.event_matches_location===false))note.unshift('⚠ 실행기 완료 기록과 Gazebo 위치가 일치하지 않는 박스가 있습니다.');
+ note.push('위치 추정은 적재·보관·NG 완료 또는 물리적 안전을 입증하지 않습니다.');
+ warning.textContent=note.join(' ');
+}
+
+function drawObservedEntities(entities){
+ const canvas=$('pose-canvas'),ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height;
+ ctx.clearRect(0,0,W,H);ctx.fillStyle='#091421';ctx.fillRect(0,0,W,H);
+ ctx.font='13px system-ui';ctx.textBaseline='middle';
+ if(!entities.length){ctx.fillStyle='#afbed0';ctx.fillText('Gazebo의 최신 모델 좌표가 없습니다. 위치를 생성하지 않습니다.',20,H/2);return;}
+ // Stable world-origin is used; only observed coordinate values are plotted.
+ const extent=Math.max(5,...entities.map(e=>Math.max(Math.abs(e.x),Math.abs(e.y),Math.abs(e.z))));
+ const scale=Math.min(54,W/(extent*3));
+ const proj=(x,y,z)=>[W/2+(x-y)*scale*.85,H*.62+(x+y)*scale*.33-z*scale];
+ const line=(a,b,color)=>{ctx.strokeStyle=color;ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.stroke();};
+ const origin=proj(0,0,0);
+ line(origin,proj(1,0,0),'#ce8c7e');line(origin,proj(0,1,0),'#8cc59b');line(origin,proj(0,0,1),'#95a9d2');
+ ctx.fillStyle='#afbed0';ctx.font='11px system-ui';
+ [['X',proj(1.2,0,0)],['Y',proj(0,1.2,0)],['Z',proj(0,0,1.2)]].forEach(([c,p])=>ctx.fillText(c,p[0],p[1]));
+ ctx.font='12px system-ui';
+ for(const e of entities){const [x,y]=proj(e.x,e.y,e.z);const name=e.name||'unknown';
+  const color=/box/i.test(name)?'#e5c786':/pallet|buffer/i.test(name)?'#74d4c9':'#d4ddec';
+  ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();
+  ctx.fillText(name.slice(0,23),x+7,y-7);
+ }
+}
+function updateCamera(name,live){
+ const item=live.data.cameras[name],age=live.source_age_s[name],img=$('camera-'+name);
+ const healthy=live.available&&live.age_s<=5&&age!==null&&age<=5&&live.camera_jpeg_ok?.[name]===true;
+ if(!healthy){img.hidden=true;$('camera-'+name+'-info').textContent='최신 JPEG 미확인 · '+(item.topic||'ROS 이미지 토픽 미발견');return;}
+ img.hidden=false;
+ const stamp=Math.floor(item.observed_epoch_s*1000);
+ if(img.dataset.stamp!==String(stamp)){
+   img.dataset.stamp=String(stamp);img.src='/api/camera/'+name+'?v='+stamp;
+ }
+ $('camera-'+name+'-info').textContent='ROS2 이미지→JPEG 확인 · '+age.toFixed(1)+'초 전 · '+item.topic;
+}
+$('camera-scale').onerror=()=>{$('camera-scale').hidden=true;$('camera-scale-info').textContent='JPEG 수신 오류 (연결 상태 확인)';};
+$('camera-cctv').onerror=()=>{$('camera-cctv').hidden=true;$('camera-cctv-info').textContent='JPEG 수신 오류 (연결 상태 확인)';};
+function renderLive(live,integration){
+ const summary=document.getElementById('hud-simulation');
+ if(summary)summary.textContent=live&&live.available&&live.fresh?'Gazebo + ROS2 수신 최신':'Gazebo 관측 확인 중';
+
+ if(!live||!live.available){
+   $('metric-joints').textContent='—';$('metric-entities').textContent='—';
+   $('metric-delay').textContent='—';$('metric-camera').textContent='0 / 2';
+   $('sync-dot').className='sync-dot offline';$('side-health-dot').className='sync-dot offline';$('sync-label').textContent='데이터 미수신';$('hud-simulation').textContent='Gazebo 관측 미수신';
+   $('live-status').textContent='관측 파일 없음';$('live-detail').textContent='읽기전용 ROS/Gazebo 어댑터를 시작하면 실제 토픽 데이터만 표시됩니다.';$('camera-scale').hidden=true;$('camera-cctv').hidden=true;drawObservedEntities([]);if(window.PACViewer3D)window.PACViewer3D.update(live,integration);return;}
+ const ages=live.source_age_s,valid=k=>ages[k]!==null&&ages[k]<=5&&live.age_s<=5;
+ const gz=valid('gazebo')?live.data.gazebo.entities:[],js=valid('joint_states')?live.data.joint_states.joints:[];
+ const names=new Set(js.map(j=>j.name));const validJoints=[1,2,3,4,5,6].filter(i=>names.has('j'+i)).length;
+ $('metric-joints').textContent=valid('joint_states')?String(validJoints)+' / 6':'—';
+ $('metric-entities').textContent=valid('gazebo')?String(gz.length):'—';
+ const latest=(valid('gazebo')&&valid('joint_states'))?[ages.gazebo,ages.joint_states]:[];
+ $('metric-delay').textContent=latest.length?Math.max(...latest).toFixed(1)+' s':'—';
+ const cams=['scale','cctv'].filter(k=>valid(k)&&live.camera_jpeg_ok?.[k]===true).length;
+ $('metric-camera').textContent=cams+' / 2';
+ const liveOk=validJoints===6&&valid('gazebo');
+ $('sync-dot').className='sync-dot '+(liveOk?'online':'offline');
+ $('sync-label').textContent=liveOk?'Gazebo / ROS 관측 중':'관측 누락 또는 지연';
+ $('side-health-dot').className='sync-dot '+(liveOk?'online':'offline');
+ $('hud-simulation').textContent=liveOk?'ROS + GAZEBO · 최근 수신':'관측 지연 / 일부 미수신';
+ const boxes=gz.filter(e=>/^box[_-]\d+$/i.test(e.name));
+ const boxWrap=$('tracked-boxes');
+ boxWrap.replaceChildren();
+ if(!boxes.length)boxWrap.append(el('p','현재 관측된 동적 박스가 없습니다.','muted tiny'));
+ else for(const b of boxes.slice(0,12)){
+    const row=el('div',undefined,'tracked-row');
+    row.append(el('span','▣ '+b.name),el('span',[b.x,b.y,b.z].map(n=>Number(n).toFixed(2)).join(' / ')+' m'));
+    boxWrap.append(row);
+ }
+
+ $('live-status').textContent=live.fresh?'최근 관측값 수신':'관측 없음 / 지연';
+ const age=s=>s===null?'미수신':s.toFixed(1)+'초 전';
+ $('live-detail').textContent='관측 최신성 (명령 지연시간 아님) · Gazebo: '+age(ages.gazebo)+' · ROS 관절: '+age(ages.joint_states)+' · 어댑터 파일: '+age(live.age_s)+'. '+(live.data.gazebo.error||'');
+ drawObservedEntities(gz);
+ if(window.PACViewer3D)window.PACViewer3D.update(live,integration);
+ $('entities-info').replaceChildren(...gz.slice(0,16).map(e=>el('div',e.name+' · ('+[e.x,e.y,e.z].map(v=>v.toFixed(3)).join(', ')+') m')));
+ $('joints').replaceChildren(...js.map(j=>{const tr=el('tr');tr.append(el('td',j.name),el('td',j.position.toFixed(4)));return tr;}));
+ const ctrl=live.data.controller;
+ $('controller-info').textContent=valid('controller')&&ctrl.max_abs_position_error!==null?'관측된 최대 관절 위치오차: '+ctrl.max_abs_position_error.toFixed(5)+' rad ('+ctrl.topic+')':'컨트롤러 오차 정보 없음 · 오차 0을 의미하지 않습니다.';
+ $('suction-info').textContent=valid('suction')?'ROS 흡착 상태 메시지: '+live.data.suction.value+' (진공센서 확인 아님)':'ROS 흡착 상태 메시지 미수신 · 실제 진공 상태 미확인';
+ updateCamera('scale',live);updateCamera('cctv',live);
+}
+function localError(text){return {schema_version:'1.0',request_id:'',session_id:sessionId,created_at:new Date().toISOString(),status:'unavailable',source:'local',answer:text,confirmed_facts:[],hypotheses:[],checks:[],actions:[],missing_information:[],context:latestContext||{run_id:'',collected_at:new Date().toISOString(),last_log_age_s:null,observation:'no_logs',stop_confirmed:null,suction:'unknown',evidence:[],alert:{id:'',text:'',source:''}},control:{mode:'read_only',command_executed:false}};}
+async function ask(q){
+ if(busy||!q.trim())return;busy=true;$('send').disabled=true;$('analyze').disabled=true;$('new').disabled=true;
+ $('request-status').textContent='진단 질문 처리 중… (Claude 사용 시 최대 120초, 첫 JSON 스키마 준비 시 지연 가능) · 읽기 전용';
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),135000);
+ try{const response=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,session_id:sessionId}),signal:controller.signal});const r=await response.json();sessionId=r.session_id||sessionId;renderReply(r,q);$('request-status').textContent=labels[r.status]||r.status;}
+ catch(e){renderReply(localError('진단 서버 연결 또는 응답 수신에 실패했습니다. 로봇 상태를 확인했다는 의미는 아닙니다.'),q);$('request-status').textContent='응답 수신 실패';}
+ finally{clearTimeout(timer);busy=false;$('send').disabled=false;$('analyze').disabled=false;$('new').disabled=false;}
+}
+$('form').addEventListener('submit',e=>{e.preventDefault();const q=$('question').value;ask(q);$('question').value='';});
+$('question').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();$('form').requestSubmit();}});
+document.querySelectorAll('[data-local-question]').forEach(btn=>btn.addEventListener('click',()=>{
+ if(busy)return;$('question').value=btn.dataset.localQuestion; $('form').requestSubmit();
+}));
+$('analyze').onclick=()=>ask('현재 선택된 실행 기록의 실패 원인을 설명해줘. 확인된 사실과 추정을 구분하고, MoveIt 계획·컨트롤러·Gazebo 실행 중 어디를 추가 확인해야 하는지 알려줘.');
+$('new').onclick=()=>{sessionId='';$('responses').replaceChildren();$('request-status').textContent='새 대화';};
+async function poll(){
+ const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),4000);
+ try{const r=await fetch('/api/state',{signal:ctrl.signal});if(!r.ok)throw new Error('state');const s=await r.json();latestContext=s.context;renderLive(s.telemetry,s.integration);renderIntegration(s.integration);
+ if(window.PACViewer3D)window.PACViewer3D.runKey((s.integration?.bound?s.integration.run_id+'|'+s.integration.world:'auto|'+
+   (s.telemetry?.data?.gazebo?.topic||'')));
+ $('connection').textContent='LOCAL SERVER · ONLINE';$('run').textContent=s.context.run_id||'실행 로그 없음';
+ $('age').textContent=s.context.last_log_age_s===null?'미확인':s.context.last_log_age_s.toFixed(1)+'초';
+ document.body.dataset.apiConfigured=s.api_configured?'1':'';
+ $('api').textContent=s.api_configured?((s.provider==='claude'?'Claude':'OpenAI')+' 키 설정됨'):'API 사용 보류';
+ if(!busy){$('send').disabled=false;$('analyze').disabled=false;}
+ $('chat-mode').textContent=s.api_configured?'고정 JSON · '+(s.provider==='claude'?'Claude':'OpenAI')+' 답변 (읽기 전용)':'오프라인 · 제한된 근거 기반 답변';
+ $('api').title=s.model+' · API 키 없어도 오프라인 질문 지원';
+ const failed=s.context.observation==='failure_logged';$('alarm').classList.toggle('has-failure',failed);
+ const testMode=(s.context.run_id||'').startsWith('TEST_') &&
+   (s.context.alert?.source||'').startsWith('logs/pac_dashboard_test_scenarios/');
+ $('test-banner').hidden=!testMode;
+ if(testMode){$('test-banner').textContent=(s.context.alert?.text||'').includes('synthetic response')?
+   'TEST ONLY · 합성 실패 로그 · ROS 요청·로봇 이동 없음':
+   'TEST ONLY · 실제 MoveIt IK 검증 응답 · 로봇 이동 없음 · 적재 실패 아님';}
+ $('alarm').classList.toggle('test-event',testMode);
+ const pastFail=failed&&s.context.last_log_age_s!==null&&s.context.last_log_age_s>30;
+ $('alarm').classList.toggle('old-event',pastFail&&!testMode);
+ $('alarm-title').textContent=testMode?'의도적 실패 테스트 · 진단용 기록':
+   (failed?(pastFail?'이전 실행의 실패 기록':'최근 실행의 실패 기록'):'선택 실행에서 실패 기록 없음');
+ $('alarm-text').textContent=failed?s.context.alert.text:'수집 범위에서 실패 기록을 찾지 못했습니다. 성공·정지 확인을 뜻하지 않습니다.';
+ $('alarm-source').textContent=s.context.alert.source;
+ $('alarm-stage').textContent=s.failure_stage?s.failure_stage.description:'단계 판정 자료 없음';
+ const list=$('evidence');list.replaceChildren();for(const f of s.context.evidence){const d=el('details');d.append(el('summary',f.text.slice(0,95)),el('pre','ID: '+f.id+'\n'+f.text+'\n'+f.source+'\n파일 수정: '+f.file_modified_at));list.append(d);}
+ }catch(e){$('connection').textContent='LOCAL SERVER · OFFLINE';$('alarm-title').textContent='로그 갱신 상태 미확인';$('live-status').textContent='관측 확인 불가';$('camera-scale').hidden=true;$('camera-cctv').hidden=true;}
+ finally{clearTimeout(timer);}
+ setTimeout(poll,450);
+}
+// Display-only controls. No Gazebo or robot control paths.
+const side=$('side');
+function toggleSide(){
+ const collapsed=document.body.classList.toggle('side-collapsed');
+ $('toggle-side').setAttribute('aria-expanded',String(!collapsed));
+ $('toggle-side').textContent=collapsed?'◧  상태 패널 열기':'◧  상태 패널 접기';
+ setTimeout(()=>{if(window.Plotly&&$('viewer3d')?.data)Plotly.Plots.resize($('viewer3d'));},300);
+}
+$('toggle-side').addEventListener('click',toggleSide);
+$('fullscreen-btn').addEventListener('click',()=>{
+  if(!document.fullscreenElement)document.documentElement.requestFullscreen?.().catch(()=>{});
+  else document.exitFullscreen?.().catch(()=>{});
+});
+$('sidebar-analysis').addEventListener('click',()=>{$('diagnostics-details').open=true; $('diagnostics-details').scrollIntoView({behavior:'smooth',block:'nearest'});});
+
+// Offline read-only questions remain available even without an API key.
+$('send').disabled=false;$('analyze').disabled=false;
+poll();
+
+</script>
+</body></html>

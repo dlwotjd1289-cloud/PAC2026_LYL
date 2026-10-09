@@ -1,0 +1,15 @@
+# Runtime and confidential local state
+__pycache__/
+.pytest_cache/
+*.py[cod]
+.env
+.env.*
+!.env.example
+logs/
+telemetry.json
+active_run.json
+*.key
+*.pem
+
+# Third party minified asset, obtained from upstream by fetch_plotly_vendor.sh
+web/vendor/plotly.min.js

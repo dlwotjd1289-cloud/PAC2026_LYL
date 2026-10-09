@@ -1,0 +1,17 @@
+V5 2026-10-10
+- 하단 ChatGPT형 대화창 / API 키 없는 로컬 읽기 전용 JSON 진단 질의
+- 지표 의미 명확화: TRACKED POSES, LAST DATA AGE, 최신 JPEG 기준 카메라 개수
+- 원본 HDR50 STL 전용 Three.js 렌더러 + Plotly/Canvas 대체 렌더러
+- 청회색 배경과 대화 UI 배치
+- 두 고정 RGB 카메라 Gazebo→ROS 브리지 자동 시작/자기 PID만 종료
+- 지표 출처와 검증 불가능 범위 문서화 (METRIC_AUDIT_KO.md)
+- 실환경 Three.js / 카메라 브리지 수신은 사용자 PC에서 추가 검증 필요
+
+V5.1 TEST (2026-10-10)
+- 실패 시나리오: sample(합성 로그), moveit-ik(실제 /compute_ik 읽기 전용 계산 요청)
+- 실제 로봇 이동, Gazebo 모델 명령/제어 금지; 테스트 전용 로그 격리
+- 기존 V5(4178)와 분리된 테스트 서버(4180)
+- UI에 TEST ONLY 표시, IK 계산 실패 단계 분리
+- 카메라 일반 오차 측정값을 실행 실패로 오인하는 사례 수정
+- Claude API는 후속 연동 예정이며 이번 버전은 API 호출 없음
+- 전체 자동 테스트 80개 통과 / sample→HTTP→질문 E2E 검증 완료

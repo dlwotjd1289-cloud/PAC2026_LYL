@@ -10,7 +10,8 @@
 | 런타임·후보·상위결정·로봇검사 `pac_runtime`, `pac_candidates`, `pac_highlevel`, `pac_robot_check`, `tools/virtual_data` | 태현 | 통합 묶음 `integration/jaesung-taehyeon-algorithm` (`6f12962`) |
 | 비선형 평가 `tools/algorithm_integration`, `pac_highlevel/merged_placement.py` | 재성 | 같은 통합 묶음 |
 | 공통 계약 `pac_common`, `config/default.yaml` | 공통 | 같은 통합 묶음 |
-| 파이프라인 연결 `pipeline/`, `config/pipeline.yaml` | 이 저장소에서 새로 작성 | — |
+| 실패 분석·Claude·3D 대시보드 `tools/pac_failure_analysis_dashboard` (V5.3) | 재성 | 팀 PR #12 `feature/gazebo-claude-failure-analysis-dashboard-v53` (`f0a171a`), 변경 없음 |
+| 파이프라인 연결 `pipeline/`, `config/pipeline.yaml`, `run_dashboard.sh` | 이 저장소에서 새로 작성 | — |
 
 원본 코드에서 바꾼 곳은 `pac_runtime/loop.py`의 주입 지점 2개(`perception_factory`,
 `core_class`)와, 빠진 패키지(`pac_planning`, Gazebo 작업셀)를 참조하던 테스트 정리뿐입니다.

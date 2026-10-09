@@ -1,0 +1,5 @@
+# Offline tests / HTTP server only (ROS2 packages are installed by ROS distro):
+aiohttp>=3.9,<4
+pytest>=7
+numpy
+opencv-python

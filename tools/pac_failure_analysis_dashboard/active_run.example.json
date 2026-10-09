@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "run_id": "EXAMPLE_RUN_REPLACE_ME",
+  "world": "ahead_workcell_v4_2_physical_scale",
+  "world_sdf": "ros2_ws/src/pac_simulation/worlds/ahead_workcell_v4_6_two_cam.sdf",
+  "log_dir": "logs/v44_generator_cycle/EXAMPLE_RUN_REPLACE_ME",
+  "box_catalog": "logs/v44_generator_cycle/EXAMPLE_RUN_REPLACE_ME/boxes.json",
+  "events_file": "logs/v44_generator_cycle/EXAMPLE_RUN_REPLACE_ME/events.jsonl",
+  "topics": {
+    "joint_states": "/joint_states",
+    "controller": "/joint_trajectory_controller/state",
+    "scale_camera": "/pac/scale_camera/image",
+    "cctv_camera": "/pac/top_camera/image",
+    "gazebo_pose": "/world/ahead_workcell_v4_2_physical_scale/dynamic_pose/info"
+  },
+  "zones": {}
+}
