@@ -1,0 +1,30 @@
+schema_version: 1
+# Stage 6 for the pac2026-ahead Gazebo workcell with the robot on a 0.5 m pedestal at world (1.35, 0.15)
+# (tools/runtime/launch/hdr50_pedestal_workcell.launch.py). Kinematics: official hdr_description URDF.
+# Values marked ASSUMPTION must be replaced when the real cell / gripper is known.
+robot_check:
+  robot_model: hdr50_22
+  rated_payload_kg: 50.0          # HDR50-22 (HH050) nominal payload
+  gripper:
+    footprint_m: [0.34, 0.26]     # pac2026-ahead pac_eoat vacuum_gripper_v1 tool base
+    tcp_offset_m: 0.22            # flange -> suction face (same xacro)
+    mass_kg: 15.0                 # ASSUMPTION
+    clearance_m: 0.01
+  cell:
+    base_from_pallet_center: [0.0, 1.15, 0.35, 0.0]    # pallet centre (1.35, -1.0), deck top 0.15 m; base at world (1.35, 0.15, 0.5)
+    deck_height_m: 0.15
+    pick_point_base_m: [-1.35, 1.05, 0.4]              # conveyor_main at world (0.0, 1.2), roller top about 0.9 m
+  motion:
+    approach_clearance_m: 0.30
+    path_step_m: 0.05
+    max_joint_jump_rad: 0.35
+    limit_margin_rad: 0.02
+    speed_scale: 0.5
+    linear_speed_mps: 0.25
+    grip_time_s: 0.5
+    release_time_s: 0.5
+  collision:                      # capsule radii: ASSUMPTION
+    upper_arm_radius_m: 0.16
+    forearm_radius_m: 0.13
+    wrist_radius_m: 0.10
+    sample_step_m: 0.04

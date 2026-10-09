@@ -1,0 +1,149 @@
+schema_version: 1
+
+dataset:
+  name: ahead_kr_general_parcel
+
+parcel_domain:
+  name: kr_general_parcel
+  max_weight_kg: 30.0
+  max_dimension_sum_m: 1.6
+  max_single_side_m: 1.0
+  scope_note: >-
+    AHEAD experiment profile for Korean general parcel scenarios. This is a
+    dataset scope, not a robot payload limit.
+
+pallet:
+  # Footprint, deck height, cargo height and load limit come from the team
+  # config (repo config/default.yaml, pac_common.config). Add explicit keys
+  # here (pallet_id, size_x_m, size_y_m, deck_height_m, max_stack_height_m,
+  # max_load_kg) only to override them for an experiment.
+  source: common
+  standard_name: T11
+
+sku_catalog:
+  - sku_id: K01
+    size_m: {x: 0.220, y: 0.190, z: 0.090}
+    weight_min_kg: 0.2
+    weight_max_kg: 3.0
+    allowed_yaws_rad: [0.0, 1.5707963267948966]
+    sampling_weight: 1.0
+    source_group: post_style_common
+  - sku_id: K02
+    size_m: {x: 0.250, y: 0.200, z: 0.150}
+    weight_min_kg: 0.2
+    weight_max_kg: 4.0
+    allowed_yaws_rad: [0.0, 1.5707963267948966]
+    sampling_weight: 1.0
+    source_group: market_popular
+  - sku_id: K03
+    size_m: {x: 0.270, y: 0.180, z: 0.150}
+    weight_min_kg: 0.3
+    weight_max_kg: 5.0
+    allowed_yaws_rad: [0.0, 1.5707963267948966]
+    sampling_weight: 1.0
+    source_group: post_style_common
+  - sku_id: K04
+    size_m: {x: 0.270, y: 0.200, z: 0.130}
+    weight_min_kg: 0.3
+    weight_max_kg: 5.0
+    allowed_yaws_rad: [0.0, 1.5707963267948966]
+    sampling_weight: 1.0
+    source_group: market_popular
+  - sku_id: K05
+    size_m: {x: 0.300, y: 0.200, z: 0.150}
+    weight_min_kg: 0.5
+    weight_max_kg: 7.0
+    allowed_yaws_rad: [0.0, 1.5707963267948966]
+    sampling_weight: 1.0
+    source_group: market_popular
+  - sku_id: K06
+    size_m: {x: 0.310, y: 0.220, z: 0.130}
+    weight_min_kg: 0.5
+    weight_max_kg: 7.0
+    allowed_yaws_rad: [0.0, 1.5707963267948966]
+    sampling_weight: 1.0
+    source_group: market_popular
+  - sku_id: K07
+    size_m: {x: 0.340, y: 0.260, z: 0.150}
+    weight_min_kg: 0.8
+    weight_max_kg: 10.0
+    allowed_yaws_rad: [0.0, 1.5707963267948966]
+    sampling_weight: 1.0
+    source_group: market_popular
+  - sku_id: K08
+    size_m: {x: 0.340, y: 0.250, z: 0.210}
+    weight_min_kg: 1.0
+    weight_max_kg: 12.0
+    allowed_yaws_rad: [0.0, 1.5707963267948966]
+    sampling_weight: 1.0
+    source_group: post_style_common
+  - sku_id: K09
+    size_m: {x: 0.350, y: 0.250, z: 0.150}
+    weight_min_kg: 0.8
+    weight_max_kg: 10.0
+    allowed_yaws_rad: [0.0, 1.5707963267948966]
+    sampling_weight: 1.0
+    source_group: market_popular
+  - sku_id: K10
+    size_m: {x: 0.400, y: 0.300, z: 0.130}
+    weight_min_kg: 1.0
+    weight_max_kg: 12.0
+    allowed_yaws_rad: [0.0, 1.5707963267948966]
+    sampling_weight: 1.0
+    source_group: market_popular
+  - sku_id: K11
+    size_m: {x: 0.410, y: 0.310, z: 0.280}
+    weight_min_kg: 2.0
+    weight_max_kg: 20.0
+    allowed_yaws_rad: [0.0, 1.5707963267948966]
+    sampling_weight: 1.0
+    source_group: post_style_common
+  - sku_id: K12
+    size_m: {x: 0.480, y: 0.380, z: 0.340}
+    weight_min_kg: 3.0
+    weight_max_kg: 25.0
+    allowed_yaws_rad: [0.0, 1.5707963267948966]
+    sampling_weight: 1.0
+    source_group: post_style_common
+  - sku_id: K13
+    size_m: {x: 0.520, y: 0.480, z: 0.400}
+    weight_min_kg: 5.0
+    weight_max_kg: 30.0
+    allowed_yaws_rad: [0.0, 1.5707963267948966]
+    sampling_weight: 1.0
+    source_group: post_style_common
+
+generation:
+  observation:
+    mode: identity
+  future_weight_visibility: unknown_individual_weight
+  # normal/light/heavy draw inside the SKU's own weight range, so bigger boxes
+  # tend to be heavier. stress ignores size (stress_weight_range_kg) and makes
+  # the exceptions: 0.13 + 0.20 * 0.10 = 15% of boxes, corr(volume, weight) ~0.5.
+  weight_profile_distribution:
+    normal: 0.49
+    light_biased: 0.09
+    heavy_biased: 0.09
+    mixed: 0.20
+    stress: 0.13
+  mixed_component_distribution:
+    normal: 0.45
+    light_biased: 0.20
+    heavy_biased: 0.25
+    stress: 0.10
+  stress_weight_range_kg: [0.2, 30.0]
+  benchmark:
+    boxes_per_scenario: 24
+    seed: 20261007
+    family_counts:
+      normal: 100
+      size_mixed: 100
+      weight_mixed: 100
+      late_large: 100
+      late_heavy: 100
+      repeated_sku: 100
+
+split:
+  train_ratio: 0.70
+  val_ratio: 0.15
+  test_ratio: 0.15

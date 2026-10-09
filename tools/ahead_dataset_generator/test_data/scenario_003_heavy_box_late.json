@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "generator_version": "1.2.0",
+  "scenario_id": "scenario_003_heavy_box_late",
+  "scenario_family": "late_heavy",
+  "state_kind": "SIMULATED",
+  "seed": 20269079,
+  "initial_system_state": {
+    "state_version": 0,
+    "stamp_sec": 0.0,
+    "pallet": {
+      "pallet_id": "P001",
+      "size": {"x": 1.1, "y": 1.1, "z": 0.15},
+      "boxes": []
+    },
+    "inventory": {
+      "tracked_boxes": {},
+      "remaining_by_sku": {
+        "K01": 2, "K02": 1, "K03": 2, "K04": 4, "K05": 1, "K06": 2,
+        "K07": 5, "K08": 1, "K09": 2, "K10": 1, "K11": 1, "K12": 1, "K13": 1
+      }
+    }
+  },
+  "constraints": {"max_height_m": 1.5, "max_load_kg": null},
+  "planner_contract_note": "This file intentionally contains no exact future arrival order. The simulator owns ground-truth arrival events.",
+  "common_fixture_purpose": "late_heavy family fixture"
+}

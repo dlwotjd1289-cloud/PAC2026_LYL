@@ -1,0 +1,8 @@
+schema_version: 1
+robot:
+  model: HDR50-22   # team target since 2026-10-08 (informational only here)
+  feasibility_owner: pac_robot
+  enforce_payload_in_dataset_generator: false
+  note: >-
+    Robot payload, CoM, inertia, IK, collision, approach and retreat checks are
+    intentionally outside the Dataset Generator contract.

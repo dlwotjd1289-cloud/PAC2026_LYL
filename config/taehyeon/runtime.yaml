@@ -1,0 +1,48 @@
+schema_version: 1
+# Runtime stages 1-3 and 7-8 (taehyeon, virtual cell). All probabilities and
+# tolerances are ASSUMPTIONS until sensor / robot data exist.
+runtime:
+  perception:                       # 1: scale -> label -> top-view RGB-D
+    weight_noise_std_ratio: 0.01
+    size_noise_std_m: 0.001
+    uncertain_probability: 0.05
+    uncertain_size_noise_std_m: 0.004
+    uncertain_confidence: 0.6
+    label_fail_probability: 0.02
+    damage_detect_probability: 0.8
+    base_view_recover_probability: 0.7
+    base_view_size_noise_std_m: 0.001
+  validator:                        # 2: label / weight / size cross-check
+    min_label_confidence: 0.5
+    size_tolerance_m: 0.012
+    size_tolerance_ratio: 0.04
+    weight_tolerance_ratio: 0.08
+    damage_policy: reject           # reject (flowchart) | place_no_load
+  supervisor:                       # 3
+    pallet_change_time_s: 60.0
+    pallet_change_manual: false     # true: a person swaps the pallet -> robot stop, HOLD
+    missing_timeout_s: 30.0
+    operator_time_s: 120.0
+  execution:                        # 7: virtual robot
+    place_xy_noise_std_m: 0.001     # inside the 5-2 budget (4 mm gap, 2 mm edge)
+    grip_fail_probability: 0.01
+    max_grip_retries: 1
+    retry_time_s: 4.0
+  verify:                           # 7: post check
+    l0_xy_m: 0.005
+    l0_z_m: 0.005
+    l1_xy_m: 0.02
+    l1_z_m: 0.01
+    max_overlap_m: 0.002
+    max_protrusion_m: 0.002
+    min_support_ratio: 0.6
+    heightmap_cell_m: 0.01
+  planning:                         # 4/5: look-ahead search time per decision
+    ahead_ratio: 0.8                # planned during the robot action: 80 % of its expected duration
+                                    # (Gazebo-cell durations 2026-10-10: no robot wait up to ~0.85)
+    max_budget_s: 10.0              #   (stage-6 cycle time / buffer travel / pallet change), capped
+    min_budget_s: 0.3
+    wait_budget_s: 1.5              # planned while the robot waits (first box, forecast missed)
+    duration_smoothing: 0.3         # running correction measured / expected duration per action type
+  robot_checks_per_option: 12       # 6: first N ranked candidates
+  seed: 0

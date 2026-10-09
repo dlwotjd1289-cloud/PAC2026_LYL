@@ -1,0 +1,31 @@
+schema_version: 1
+# Stage 1 top-view RGB-D measurement (pac_perception.depth_measurement.DepthConfig)
+# and label fallback (pac_perception.sku_resolver.ResolverConfig). SI units.
+# Camera pose / topic come from config/camera.yaml and config/workcell.yaml;
+# optional_3d_camera must be enabled there (false today: the Gazebo cameras are RGB).
+
+depth:
+  # conveyor frame (assumed): origin = pick zone centre (-1.08, 1.20) on the roller top 0.895, world axes.
+  # Boxes rest against the stopper face (x -0.845 -> +0.235); x_max stops short of the stopper top,
+  # x_min covers the longest box (0.66 m), y reaches just short of the side rails (0.76 m apart).
+  roi_xy_m: [-0.50, 0.232, -0.375, 0.375]
+  min_depth_m: 0.2
+  max_depth_m: 4.0
+  min_box_height_m: 0.03
+  min_points: 200
+  cluster_gap_m: 0.02                    # queued boxes in the ROI are split along conveyor x
+  edge_margin_m: 0.004                   # box at the ROI edge: partial view, no damage call
+  top_percentile: 90.0
+  interior_margin_m: 0.03
+  max_dent_m: 0.012
+  max_tilt_rad: 0.0524                   # 3 deg
+  min_rectangularity: 0.92
+  max_corner_gap_m: 0.02
+  min_valid_ratio: 0.85
+  uncertain_confidence: 0.6              # = pac_runtime PerceptionConfig.uncertain_confidence
+
+resolver:
+  size_tolerance_m: 0.012                # = pac_runtime ValidatorConfig
+  size_tolerance_ratio: 0.04
+  weight_tolerance_ratio: 0.08
+  inferred_confidence: 0.9

@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "generator_version": "1.2.0",
+  "dataset_name": "ahead_kr_general_parcel",
+  "mode": "sample",
+  "run_id": "ahead_kr_general_parcel-sample-20261007",
+  "seed": 20261007,
+  "git_commit": "ba1d2754049ee3cf8ab4a077aa8a4ccb9d838328",
+  "scenario_count": 3,
+  "box_count": 144,
+  "units": {
+    "length": "m",
+    "mass": "kg",
+    "time": "s",
+    "angle": "rad"
+  },
+  "contract": {
+    "runtime_model": "pac_common dataclass",
+    "storage_config": "YAML",
+    "storage_test_data": "JSON/JSONL",
+    "planner_future_order_exposed": false,
+    "robot_feasibility_in_generator": false
+  },
+  "note": "Subset (3 scenarios) of jaesung's AHEAD dataset generator sample output; used as a test fixture by taehyeon."
+}

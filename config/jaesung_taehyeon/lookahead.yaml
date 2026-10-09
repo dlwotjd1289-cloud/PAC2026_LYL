@@ -1,0 +1,18 @@
+schema_version: 1
+lookahead:
+  horizon: 5
+  placer: layer
+  mode: pilot
+  beam: 3
+  time_budget_s: 7.0
+  margin: 0.005
+  w_void: 1.0
+  w_rough: 0.3
+  w_buffer: 0.01
+  w_ng: 0.5
+  w_time: 0.0005
+  w_dead: 1.0
+  dead_top_skus: 6
+  objective: j_proxy
+  pallet_cost_s: 2368.0
+  measured_preview_count: 5

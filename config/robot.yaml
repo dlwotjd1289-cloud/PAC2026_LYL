@@ -1,0 +1,50 @@
+schema_version: 3
+# Robot settings (common standard section 19). Team decision 2026-10-08:
+# the target robot is HD Hyundai Robotics HDR50-22 (HDP160-31 was the target
+# before; it is archived below because no verified model exists).
+
+robot:
+  target_model: hdr50_22
+  vendor: HD Hyundai Robotics
+  dof: 6
+  moveit_group: hdr_manipulator
+  base_frame: base_link
+  flange_frame: flange
+  tcp_frame: vacuum_tcp
+  # Official product nominal values; metadata, not direct box limits.
+  nominal_payload_kg: 50.0
+  nominal_reach_m: 2.239
+  # AHEAD commands x/y/z/yaw only (box kept upright, section 9.1).
+  palletizer_emulation:
+    enabled: true
+    command_space: [x, y, z, yaw]
+    lock_roll_rad: 0.0
+    lock_pitch_rad: 0.0
+    vertical_approach: true
+    vertical_retreat: true
+
+# Stage 6 robot feasibility (validate_robot_motion, section 16.6).
+robot_feasibility:
+  validation_backend: external_required   # MoveIt / Gazebo backend injected into pac_robot
+  require_state_version_match: true
+  require_reachability: true
+  require_ik: true
+  require_robot_collision_check: true
+  require_approach_check: true
+  require_retreat_check: true
+  require_eoat_clearance: true
+  gripper_mass_kg: null                   # unknown until the EOAT is fixed
+  load_com_in_gripper_m: null
+
+archived_targets:
+  hdp160_31:
+    status: former_target_until_2026_10_08
+    description_status: unavailable_in_public_hdr_repos_as_of_2026_10_07
+    tool_mass_kg: null
+    tool_com_m: null
+    inertia_limits: null
+
+sources:
+  official_description_repo: https://github.com/hyundai-robotics/hdr_description
+  official_driver_repo: https://github.com/hyundai-robotics/hdr_ros2_driver
+  official_gazebo_repo: https://github.com/hyundai-robotics/hdr_simulation_gz

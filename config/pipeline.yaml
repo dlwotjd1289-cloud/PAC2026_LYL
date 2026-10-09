@@ -1,0 +1,41 @@
+schema_version: 1
+# End-to-end virtual pipeline (pipeline/run.py): generator -> depth perception
+# -> Taehyeon layer selection + N=5 look-ahead -> robot check -> placement
+# -> Jaesung 5-criteria evaluation. Algorithm settings are the integration
+# profile under config/jaesung_taehyeon/ and are not repeated here.
+
+generator:
+  mode: sample                 # sample | benchmark (tools/ahead_dataset_generator)
+  sample_per_family: 1         # scenarios per family (6 families)
+  boxes_per_scenario: 40
+  seed: null                   # null: generator config seed
+
+cell:
+  pallet_xy_m: [1.1, 1.1]
+  seed: 0
+  spec_mismatch_probability: 0.02   # wrong carton: one side x0.85 / x1.15
+  missing_probability: 0.02         # ordered box never arrives
+
+perception:
+  config: config/donghan/perception_depth.yaml
+  # The shipped ROI ends at x 0.232, 3 mm short of the stopper face (0.235):
+  # a box at the stopper always touches the ROI edge, so in_full_view is
+  # False and no damage call is made. The synthetic camera draws no stopper,
+  # so the ROI is opened to 0.26 here. To confirm with Donghan for the real cell.
+  roi_xy_m: [-0.50, 0.26, -0.375, 0.375]
+  camera:
+    height_m: 1.5
+    width_px: 480
+    height_px: 360
+    focal_px: 450.0
+    centre_x_m: -0.13
+    depth_noise_std_m: 0.001
+    hole_ratio: 0.002
+  damage:                      # how a damaged box (generator strength model) is drawn
+    dent_m: 0.025
+    crushed_corner_m: 0.06
+  queue_probability: 0.5       # next box visible upstream in the same image
+
+run:
+  ranker: layer                # Taehyeon LayerPlacer (integration default)
+  order_wall_limit_s: 0        # 0: no limit

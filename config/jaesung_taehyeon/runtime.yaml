@@ -1,0 +1,49 @@
+schema_version: 1
+runtime:
+  perception:
+    weight_noise_std_ratio: 0.01
+    size_noise_std_m: 0.001
+    uncertain_probability: 0.05
+    uncertain_size_noise_std_m: 0.004
+    uncertain_confidence: 0.6
+    label_fail_probability: 0.02
+    damage_detect_probability: 0.8
+    base_view_recover_probability: 0.7
+    base_view_size_noise_std_m: 0.001
+  validator:
+    min_label_confidence: 0.5
+    size_tolerance_m: 0.012
+    size_tolerance_ratio: 0.04
+    weight_tolerance_ratio: 0.08
+    damage_policy: reject
+  supervisor:
+    pallet_change_time_s: 60.0
+    pallet_change_manual: false
+    missing_timeout_s: 30.0
+    operator_time_s: 120.0
+  execution:
+    place_xy_noise_std_m: 0.001
+    grip_fail_probability: 0.01
+    max_grip_retries: 1
+    retry_time_s: 4.0
+  verify:
+    l0_xy_m: 0.005
+    l0_z_m: 0.005
+    l1_xy_m: 0.02
+    l1_z_m: 0.01
+    max_overlap_m: 0.002
+    max_protrusion_m: 0.002
+    min_support_ratio: 0.6
+    heightmap_cell_m: 0.01
+  planning:
+    ahead_ratio: 0.8
+    max_budget_s: 7.0
+    min_budget_s: 0.3
+    wait_budget_s: 1.5
+    duration_smoothing: 0.3
+    decision_budget_s: 7.0
+  robot_checks_per_option: 12
+  seed: 0
+  capacity:
+    model: jaesung_site
+    site: general

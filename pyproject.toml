@@ -1,0 +1,42 @@
+# Single dependency declaration for the whole monorepo (common standard section 2).
+# ROS 2 packages under ros2_ws/src keep their package.xml/setup.py for colcon only.
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pac2026-lyl"
+version = "0.3.0"
+description = "PAC 2026 Mission 1 - AHEAD mixed palletizing: generator -> depth perception -> stacking (team LYL)"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.23,<3",
+    "PyYAML>=6,<7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4,<9"]
+# High-level PPO policy (pac_highlevel, not used by the default look-ahead); tests skip when absent
+rl = ["gymnasium>=0.29", "torch>=2.0", "stable-baselines3>=2.0", "sb3-contrib>=2.0"]
+
+[tool.setuptools.packages.find]
+where = [
+    "ros2_ws/src/pac_common",
+    "ros2_ws/src/pac_candidates",
+    "ros2_ws/src/pac_highlevel",
+    "ros2_ws/src/pac_perception",
+    "ros2_ws/src/pac_robot_check",
+    "ros2_ws/src/pac_runtime",
+    "tools/virtual_data",
+    "tools/ahead_dataset_generator/src",
+]
+include = [
+    "pac_common*", "pac_candidates*", "pac_highlevel*", "pac_perception*",
+    "pac_robot_check*", "pac_runtime*", "virtual_data*", "ahead_dataset_generator*",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "tools/ahead_dataset_generator/tests", "tools/algorithm_integration"]
+addopts = "-ra --import-mode=importlib"
+# Package paths are added by the root conftest.py (Ubuntu 22.04 ships pytest 6.2,
+# which has no `pythonpath` option).

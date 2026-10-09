@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>pac_common</name><version>0.1.0</version>
+  <description>AHEAD mixed palletizing module</description>
+  <maintainer email="maintainers@example.invalid">AHEAD team</maintainer>
+  <license>LicenseRef-All-Rights-Reserved</license>
+  <exec_depend>geometry_msgs</exec_depend>
+  <export><build_type>ament_python</build_type></export>
+</package>

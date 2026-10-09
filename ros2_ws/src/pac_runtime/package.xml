@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>pac_runtime</name>
+  <version>0.1.0</version>
+  <description>AHEAD runtime stages 1-3 (perception, State Validator, Supervisor) and 7-8 (execution post check with L0-L4 escalation, State Manager) plus the 1-to-8 loop on a virtual cell.</description>
+  <maintainer email="taehyeon@example.com">taehyeon</maintainer>
+  <license>Proprietary</license>
+  <exec_depend>pac_common</exec_depend>
+  <exec_depend>pac_candidates</exec_depend>
+  <exec_depend>pac_highlevel</exec_depend>
+  <exec_depend>pac_planning</exec_depend>
+  <exec_depend>pac_robot_check</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>trajectory_msgs</exec_depend>
+  <exec_depend>builtin_interfaces</exec_depend>
+  <exec_depend>ros_gz_sim</exec_depend>
+  <test_depend>python3-pytest</test_depend>
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
