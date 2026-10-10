@@ -77,6 +77,10 @@ class PlanningConfig:            # stage 4/5 search time per decision (look-ahea
     duration_smoothing: float = 0.3
     # Whole-decision monitoring target. Zero preserves the legacy profile.
     decision_budget_s: float = 0.0
+    # Over decision_budget_s: True = still execute the command computed so far
+    # (the search is anytime: it already holds the best option found in time);
+    # False = discard it and WAIT (legacy, stops the order).
+    use_late_command: bool = False
 
 
 @dataclass(frozen=True)

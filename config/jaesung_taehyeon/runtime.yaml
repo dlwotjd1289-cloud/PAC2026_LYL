@@ -42,6 +42,7 @@ runtime:
     wait_budget_s: 1.5
     duration_smoothing: 0.3
     decision_budget_s: 7.0
+    use_late_command: true   # over 7 s: go on with the best command computed so far
   robot_checks_per_option: 12
   seed: 0
   capacity:

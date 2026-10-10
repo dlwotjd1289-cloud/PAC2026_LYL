@@ -269,6 +269,9 @@ class RuntimeCore:
                                      "exceeded": bool(limit and elapsed > limit)}
         if command.evaluation:
             command.evaluation["decision_timing"] = dict(self.last_decision_timing)
+        if limit and elapsed > limit and self.cfg.planning.use_late_command and command.action != "WAIT":
+            self.counts["decision_budget_exceeded_used_best"] += 1
+            return command
         if limit and elapsed > limit:
             self.counts = counts
             self.repacks_for_current = repacks
