@@ -60,12 +60,35 @@ def install(module):
         if not self.get_parameter('use_sim_time').value:
             raise module.Failure('가상 흡착은 시뮬레이션 시간 사용 시에만 가능합니다.')
         self._virtual_contact_ready = False
-        original_guard = self.vertical
-        self.vertical = ContactProxy(self, original_guard, top, size)
+        if hasattr(self, 'vertical'):
+            # Compatibility with an executor that exposes a vertical descent guard.
+            original_guard = self.vertical
+            self.vertical = ContactProxy(self, original_guard, top, size)
+            try:
+                return original_grip(self, b, yaw, top, size, q, at_pick)
+            finally:
+                self.vertical = original_guard
+                self._virtual_contact_ready = False
+
+        # The original V4.6 MoveIt executor descends through self.line(), not
+        # self.vertical. Intercept ONLY the final, unchecked cup press.
+        original_line = self.line
+        contact = ContactProxy(self, None, top, size)
+
+        def guarded_line(xyz, target_yaw, what, *args, **kwargs):
+            if what == 'press cup on box':
+                return contact.descend(xyz[2], target_yaw, what,
+                                       avoid_collisions=kwargs.get('avoid_collisions', True))
+            result = original_line(xyz, target_yaw, what, *args, **kwargs)
+            if what == 'descend to box (collision-checked)' and kwargs.get('avoid_collisions', True):
+                contact.checked = True
+            return result
+
+        self.line = guarded_line
         try:
             return original_grip(self, b, yaw, top, size, q, at_pick)
         finally:
-            self.vertical = original_guard
+            self.line = original_line
             self._virtual_contact_ready = False
 
     def set_vacuum(self, on):

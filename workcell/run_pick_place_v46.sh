@@ -44,4 +44,10 @@ if [[ " $* " == *" --pose-source camera "* && "${PERCEPTION_EXTERNAL:-0}" != 1 ]
 fi
 # No fixed startup sleep: original.main waits for action/service availability,
 # box/suction state, and the matching suction-target ACK before moving.
-python3 -u "$LYL_ROOT/workcell/lyl_moveit_executor.py" "$@"
+# Use the original executor unchanged for physical suction. The optional
+# contact adapter is loaded only when explicitly selected.
+if [[ "${PAC_VIRTUAL_SUCTION:-0}" == 1 ]]; then
+  python3 -u "$LYL_ROOT/workcell/lyl_moveit_executor.py" "$@"
+else
+  python3 -u "$ROOT/scripts/moveit_pick_place_v44.py" "$@"
+fi

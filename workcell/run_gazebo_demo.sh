@@ -74,18 +74,23 @@ if [[ "$(stat -c %y "$MANIFEST" 2>/dev/null || echo missing)" == "$before" ]]; t
 fi
 
 echo ">>> [6/6] API 연동 대시보드 V5.3 (http://127.0.0.1:$PORT)"
-for p in $(pgrep -f 'pac_diagnostic_console.py serve|pac_ros_observer.py run|pac_camera_bridge_watch.py'); do kill "$p" 2>/dev/null || true; done
-sleep 1
-setsid nohup bash "$LYL/tools/pac_failure_analysis_dashboard/start_dashboard_integrated.sh" "$WC" \
-  > "$LOG/dashboard.log" 2>&1 < /dev/null &
-DASHBOARD_PID=$!
+# Preserve an already running dashboard and its observers. Do not kill other
+# diagnostic processes just to start the dashboard on the requested port.
+DASHBOARD_PID=""
+if curl --max-time 2 -sf "http://127.0.0.1:$PORT/api/state" >/dev/null; then
+  echo ">>> 기존 대시보드 포트 $PORT 재사용 (관측기·시뮬레이터 유지)"
+else
+  setsid nohup bash "$LYL/tools/pac_failure_analysis_dashboard/start_dashboard_integrated.sh" "$WC" \
+    > "$LOG/dashboard.log" 2>&1 < /dev/null &
+  DASHBOARD_PID=$!
+fi
 dashboard_status=1
 for _ in $(seq 30); do
   if curl --max-time 2 -sf "http://127.0.0.1:$PORT/api/state" >/dev/null; then
     dashboard_status=0
     break
   fi
-  kill -0 "$DASHBOARD_PID" 2>/dev/null || break
+  if [[ -n "$DASHBOARD_PID" ]] && ! kill -0 "$DASHBOARD_PID" 2>/dev/null; then break; fi
   sleep 1
 done
 if [[ "$dashboard_status" == 0 ]]; then
