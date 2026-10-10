@@ -126,6 +126,16 @@ def perception_summary(records, stream):
     }
 
 
+def decision_summary(decisions, budget_s):
+    """Report the active deadline; retain the historical 7 s field for readers."""
+    times = [d["elapsed_s"] for d in decisions]
+    return {"count": len(times), "max_s": max(times, default=None),
+            "mean_s": round(statistics.mean(times), 4) if times else None,
+            "budget_s": budget_s,
+            "over_budget": sum(t > budget_s for t in times) if budget_s else 0,
+            "over_7s": sum(t > 7.0 for t in times), "log": decisions}
+
+
 def run_order(spec, index, ds, cfg, configs, out_dir, dashboard=None):
     cc, hl, la, rt, vc = configs
     c = cfg["cell"]
@@ -190,10 +200,7 @@ def run_order(spec, index, ds, cfg, configs, out_dir, dashboard=None):
             signal.alarm(0)
             signal.signal(signal.SIGALRM, previous)
     row["wall_s"] = round(time.perf_counter() - started, 2)
-    times = [d["elapsed_s"] for d in decisions]
-    row["decisions"] = {"count": len(times), "max_s": max(times, default=None),
-                        "mean_s": round(statistics.mean(times), 4) if times else None,
-                        "over_7s": sum(t > 7.0 for t in times), "log": decisions}
+    row["decisions"] = decision_summary(decisions, rt.planning.decision_budget_s)
     row["perception"] = {name: perception_summary(p.records, name) for name, p in made.items()}
     row["perception_records"] = {name: p.records for name, p in made.items()}
     t0 = time.perf_counter()
@@ -227,6 +234,8 @@ def order_line(row):
                         and row["decisions"]["log"] else row.get("error")),
         "pallets": r.get("pallets"), "fill_mean": round(r["fill_true_mean"], 4) if r else None,
         "cell_time_s": r.get("time_s"), "decision_max_s": row["decisions"]["max_s"],
+        "decision_budget_s": row["decisions"].get("budget_s"),
+        "decision_over_budget": row["decisions"].get("over_budget"),
         "decision_over_7s": row["decisions"]["over_7s"], "wall_s": row["wall_s"],
         "damage_detected": f"{p.get('damage_detected', 0)}/{p.get('damage_true', 0)}",
         "damage_false_alarm": p.get("damage_false_alarm", 0),
@@ -247,7 +256,7 @@ def report(lines, out_dir, meta):
     if done:
         md += ["", f"Mean pallet fill over complete orders: "
                f"{statistics.mean(x['fill_mean'] for x in done):.3f} "
-               "(sum of true box volumes / pallet volume up to the height limit, per closed pallet)."]
+               "(mean of order-level pallet fill, including the final used pallet)."]
     (out_dir / "summary.md").write_text("\n".join(md) + "\n", encoding="utf-8")
     write(out_dir / "summary.json", {"meta": meta, "orders": lines})
 
@@ -291,7 +300,10 @@ def main(argv=None):
     if args.ids and len(chosen) != len(args.ids):
         sys.exit(f"unknown ids: {set(args.ids) - {s.scenario_id for _, s in chosen}}")
     meta = {"created_utc": datetime.now(timezone.utc).isoformat(), "dataset": str(dataset_dir),
-            "config": cfg, "profile": str(PROFILE.relative_to(REPO))}
+            "config": cfg, "profile": str(PROFILE.relative_to(REPO)),
+            "effective_configs": {name: asdict(value) for name, value in zip(
+                ("candidates", "highlevel", "lookahead", "runtime", "virtual_data"), configs)},
+            "robot_check": asdict(load_robot_check_config(PROFILE / "robot_check.yaml"))}
     (out / "orders").mkdir(exist_ok=True)
     lines = []
     for index, spec in chosen:

@@ -410,7 +410,7 @@ class Runner:
         with log.open("w") as f:
             rc = subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT, env=env, cwd=WORKCELL).returncode
         text = log.read_text(errors="replace")
-        ok = "MOVEIT PICK&PLACE PASS" in text
+        ok = rc == 0 and "MOVEIT PICK&PLACE PASS" in text
         for line in text.splitlines():
             if re.search(r"복구|\[camera\]|recover", line):
                 self.run.log("    " + line.strip()[:200])
@@ -460,10 +460,10 @@ class Runner:
                         b.done = True
                         continue
                     if verdict.route == "INSPECTION":
-                        b.done = True
                         self.run.log(f"[validator] WARN {b.name} -> inspection ({verdict.kind.value})")
                         if not self.to_ng(b, verdict.kind.value):
                             return self.fail(b, "NG move failed")
+                        b.done = True
                         continue
                     self.run.log(f"[validator] {b.name} {verdict.box.sku_id} {verdict.kind.value}")
                 elif self.more_coming() and not core.has_work():
@@ -541,16 +541,21 @@ class Runner:
             self.run.event(b.name, "buffer_stored", reason=f"bay {cmd.slot + 1}")
             return True
         if a == "REJECT_NG":
-            b.done = True
             ok = self.to_ng(b, cmd.reason or "REJECT_NG")
+            if not ok:
+                return self.fail(b, "NG move failed") or False
+            b.done = True
             core.on_result(cmd)
-            return ok or self.fail(b, "NG move failed") or False
+            return True
         if a == "PALLET_CLOSE":
             self.run.log(f"[cycle] CLOSE pallet {self.pallet_no} ({cmd.reason}, {len(self.placed_now)} boxes) -> pallet change")
             self.state_file.write_text(json.dumps({"placed": [{"box_id": n} for n, _, _ in self.placed_now]}))
             r = subprocess.run([sys.executable, str(WORKCELL / "scripts/pallet_swap_v44.py"), "--state", str(self.state_file),
                                 "--index", str(self.pallet_no)], capture_output=True, text=True, cwd=WORKCELL)
             self.run.log("    " + (r.stdout.strip().splitlines() or ["(no output)"])[-1])
+            if r.returncode != 0:
+                self.run.log(f"[pallet_swap] FAIL rc {r.returncode}: {r.stderr.strip()[-400:]}")
+                return self.fail(None, "pallet swap failed") or False
             core.on_result(cmd)
             core.supervisor.pallet_change(core.sm.t)
             self.pallet_no += 1
@@ -592,9 +597,13 @@ class Runner:
         self.run.log(f"[pipeline] order {self.args.scenario}: {len(self.boxes)} boxes, run {self.run.dir}")
         conv = threading.Thread(target=self.conveyor_loop, daemon=True)
         conv.start()
+        exit_code, outcome = 1, "failed"
         try:
             self.decision_loop()
+            if not self.stop:
+                exit_code, outcome = 0, "complete"
         except KeyboardInterrupt:
+            exit_code, outcome = 130, "interrupted"
             self.run.log("[pipeline] interrupted")
         except Exception as error:  # noqa: BLE001
             import traceback
@@ -604,12 +613,19 @@ class Runner:
         finally:
             self.stop = True
             conv.join(timeout=3)
+            try:
+                self.cell.roller(0.0)
+            except Exception as error:  # noqa: BLE001 - preserve failure status and summary
+                exit_code, outcome = 1, "failed"
+                self.run.log(f"[pipeline] ERROR conveyor stop failed: {error}")
             summary = {"run_id": self.run.id, "scenario": self.args.scenario, "boxes": len(self.boxes),
+                       "status": outcome, "exit_code": exit_code,
                        "placed": sum(len(b) for _, b in self.core.closed) + len(self.core.sm.placed),
                        "inspection": self.core.inspection, "pallets": self.pallet_no,
                        "decisions": self.decisions, "counts": dict(self.core.counts)}
             (self.run.dir / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
             self.run.log(f"[pipeline] summary {self.run.dir / 'summary.json'}")
+        return exit_code
 
 
 def main():
@@ -617,8 +633,8 @@ def main():
     ap.add_argument("--dataset", type=Path, required=True)
     ap.add_argument("--scenario", required=True)
     ap.add_argument("--count", type=int, default=0, help="first N arriving boxes (0 = whole order)")
-    Runner(ap.parse_args()).main()
+    return Runner(ap.parse_args()).main()
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

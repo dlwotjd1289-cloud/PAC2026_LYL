@@ -37,7 +37,10 @@ setsid nohup ros2 launch pac_bringup hdr50_moveit_v44.launch.py > "$LOG/moveit.l
 for _ in $(seq 60); do grep -q 'Ready to take commands' "$LOG/moveit.log" && break; sleep 1; done
 grep -q 'Ready to take commands' "$LOG/moveit.log" || { echo "ERROR: MoveIt not ready ($LOG/moveit.log)" >&2; exit 1; }
 # work cell collision scene in MoveIt before the first box, arm to READY (above PICK)
-(cd "$WC/scripts" && python3 -u moveit_prepare_v46.py) 2>&1 | tee "$LOG/moveit_prepare.log" | grep -E '>>>|FAIL' || true
+if ! (cd "$WC/scripts" && python3 -u moveit_prepare_v46.py) 2>&1 | tee "$LOG/moveit_prepare.log"; then
+  echo "ERROR: MoveIt environment/READY preparation failed ($LOG/moveit_prepare.log)" >&2
+  exit 1
+fi
 
 echo ">>> [4/6] 센서·카메라 브리지, CCTV 박스 인식 노드"
 setsid "$BR" '/pac/scale/wrench@geometry_msgs/msg/WrenchStamped[ignition.msgs.Wrench' \
@@ -64,5 +67,10 @@ setsid nohup bash "$LYL/tools/pac_failure_analysis_dashboard/start_dashboard_int
   > "$LOG/dashboard.log" 2>&1 < /dev/null &
 for _ in $(seq 30); do curl -sf http://127.0.0.1:4183/api/state >/dev/null && break; sleep 1; done
 [[ "${NO_BROWSER:-0}" == 1 ]] || (xdg-open http://127.0.0.1:4183 >/dev/null 2>&1 &)
-wait "$RUNNER" || true
-echo "RUN DONE: Gazebo / RViz / dashboard stay up. Logs $LOG"
+if wait "$RUNNER"; then
+  echo "RUN DONE: Gazebo / RViz / dashboard stay up. Logs $LOG"
+else
+  runner_status=$?
+  echo "ERROR: runner failed (exit $runner_status). Gazebo / RViz / dashboard stay up. Logs $LOG" >&2
+  exit "$runner_status"
+fi

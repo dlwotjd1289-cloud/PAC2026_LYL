@@ -1,10 +1,12 @@
 # Gazebo V4.6 작업셀에서 실행
 
-가상 셀(`pipeline/`)과 같은 알고리즘을 재성님 V4.6 Gazebo 작업셀에서 돌립니다. 작업셀 코드는 팀 저장소 `jaesung/v46-final-3d-20261010`(`eba65a2`)의 로컬 사본(`PAC_WORKCELL_REPO`, 기본 `../pac2026_integrated`)을 씁니다.
+가상 셀(`pipeline/`)과 같은 알고리즘을 재성님 V4.6 Gazebo 작업셀에 연결하는 실행 경로입니다. 작업셀 코드는 팀 저장소 `jaesung/v46-final-3d-20261010`(`eba65a2`)의 로컬 사본(`PAC_WORKCELL_REPO`, 기본 `../pac2026_integrated`)을 씁니다. ROS 2 Humble·MoveIt 작업셀 빌드와 `workcell/v46_patch/lyl_v46_workcell.patch` 적용이 선행되어야 합니다. 현재는 인식·시작 준비까지 확인했고, 박스 전체 적재 완료는 미확인입니다.
 
 ```bash
-bash workcell/run_gazebo_demo.sh <DATASET> S0003 12     # 12박스, 0 = 주문 전체
-PAC_ENABLE_CLAUDE=1 bash workcell/run_gazebo_demo.sh ...  # 대시보드 Claude 답변
+export PAC_WORKCELL_REPO=/home/jaesung/AHEAD/pac2026_integrated
+# 저장소 루트에서 실행. 데이터셋 경로와 시나리오는 실제 생성된 값으로 지정합니다.
+bash workcell/run_gazebo_demo.sh /absolute/path/to/dataset S0003 12   # 12박스, 0 = 주문 전체
+PAC_ENABLE_CLAUDE=1 bash workcell/run_gazebo_demo.sh /absolute/path/to/dataset S0003 12
 ```
 
 Gazebo V4.6 → MoveIt2 + RViz → 브리지 → 실행기 → V5.3 대시보드(http://127.0.0.1:4183) 순서로 뜹니다. PyBullet 뷰어는 쓰지 않습니다.
@@ -14,10 +16,11 @@ Gazebo V4.6 → MoveIt2 + RViz → 브리지 → 실행기 → V5.3 대시보드
 | 단계 | 사용 코드 |
 |---|---|
 | 주문 | 생성기 데이터셋 + `virtual_data.runtime_cell` (규격 불일치·누락·파손 박스, 가상 셀과 같은 시드) |
-| 컨베이어 | `workcell/lyl_cell_runner.py`: 계량→스토퍼 20초, 박스 간격 4초(주행 시간 기준), 계량~스토퍼 5개면 투입 정지. 롤러 구동이 하나라 계량·스토퍼 대기 때 라인 전체가 멈추고 간격은 유지 |
+| 컨베이어 | `config/workcell_v46.yaml`: 계량→픽업 구간 15초, 박스 간격 5초(주행 시간 기준), 대기열 최대 3개면 투입 정지. 계량·픽업 대기 때 라인 전체가 멈추므로 벽시계 기준 도착 간격은 더 길어질 수 있음 |
 | 인식 | 계량 구간 탑뷰 `rgbd_camera`의 깊이 영상 → 동한님 `measure_box`(규격·눌림·모서리) + 저울 무게 → `build_raw_observation` |
-| 판단 | `RuntimeCore` (통합 프로필 + `config/workcell_v46.yaml`: 버퍼 4칸·칸 크기 제한, 재적재 끔) |
+| 판단 | `RuntimeCore` (통합 프로필 + `config/workcell_v46.yaml`: 미리보기 최대 3개 모두 측정 무게·규격, 버퍼 4칸·칸 크기 제한, 재적재 끔). 가상 셀 기본은 5개이며 `pipeline.run --visible 3`으로 맞춤 |
 | 경로·실행 | V4.6 `run_moveit_pick_place_v44.sh` (MoveIt 경로, CCTV 위치 확인, 집기 재시도·재배치·재계획) |
+| 실행 속도 | MoveIt `free_speed: 0.18`, `cart_speed: 0.20`. 로봇 검사 모델의 관절 90 %·수직 0.6 m/s 가정과 별개이며, 모델상 5초 이내라는 계산을 Gazebo 실행시간으로 해석하지 않음 |
 | NG | 검증 단계 `INSPECTION`·`REJECT_NG` 박스를 V4.6 NG 구역 바닥으로 (`--place-on ng`), 자리 순서는 동한님 Hold/NG(3열×2행, 다음 층) |
 | 팔레트 교체 | V4.6 `pallet_swap_v44.py` |
 | 대시보드 | 실행 폴더 `logs/lyl_cell/<run>/`의 사이클 로그·`boxes.json`·`events.jsonl` + 실행 등록. 3D는 V4.6 월드 SDF + Gazebo 실시간 위치 |
@@ -41,4 +44,8 @@ Gazebo V4.6 → MoveIt2 + RViz → 브리지 → 실행기 → V5.3 대시보드
 
 - 깊이 카메라: 계량대 위 0.41×0.31×0.28 m 박스를 Gazebo 깊이 영상으로 측정 → 0.410×0.310×0.280 m, 위치·회전 일치, 확신도 1.0.
 - 월드 생성 스크립트 결과와 SDF가 바이트 단위로 같음(공백 제외).
-- 버퍼 칸 4(로봇에서 수평 2.21 m)와 NG 구역 바닥의 도달 가능성, MoveIt 속도 0.5는 Gazebo 실행으로 확인해야 함. 코드 주석상 0.4에서 긴 PTP 이동이 경로 허용오차로 중단된 기록이 있음.
+- 추가 인식 시험: 5박스에서 무게 오차 0.01 kg, 규격 오차 1 mm 이하, 파손 박스의 `top_dent` 검출 기록이 있음(docs/05).
+- MoveIt 환경 등록·READY 이동, 컨베이어 15초 / 5초 / 3개 설정, 대시보드 `live` 연결을 확인함. 짧은 박스가 스토퍼까지 닿지 않는 문제 때문에 픽업 도착은 **PICK 구역에서 1초 정지**로 판정함.
+- **MoveIt 속도 0.5 시험 실패:** 5번 관절 추종오차 0.21 rad > 허용 0.20 rad로 첫 이동과 복구 이동 중단. Gazebo 실시간 배율은 0.28이었으며 속도를 0.18 / 0.20으로 복구함.
+- 기본 속도에서 첫 집기가 누르기 편차 1.53 mm > 한계 1.5 mm로 중단됨. 한계를 2.0 mm로 변경한 뒤 재실행했지만 집기 완료 전 사용자 요청으로 종료함. **박스 1개 전체 적재와 주문 전체 실행은 아직 미검증.**
+- 버퍼 칸 4(로봇에서 수평 2.21 m)와 NG 구역 바닥의 실제 MoveIt 도달·적재는 미검증. 모델상 동작시간 평균 4.19초·최대 4.55초(기존 배치 230건 재계산)는 실물·Gazebo에서 5초 이내 동작을 입증하지 않음.
