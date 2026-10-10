@@ -31,7 +31,7 @@ ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_API_VERSION = "2023-06-01"
 DEFAULT_MODEL = "gpt-4o-mini"  # legacy compatibility only
 DEFAULT_CLAUDE_MODEL = "claude-haiku-5-5"
-CLAUDE_REQUEST_TIMEOUT_S = 120.0  # shared by the initial attempt and one receive retry
+CLAUDE_REQUEST_TIMEOUT_S = 300.0  # shared by the initial attempt and one receive retry
 MAX_QUESTION = 2000
 MAX_EVIDENCE = 24
 MAX_HISTORY = 8
@@ -443,7 +443,7 @@ async def claude_call(session, api_key, payload):
     if workspace:
         headers['anthropic-workspace-id'] = workspace
     # A cold structured-output schema can take extra time to compile on the API side.
-    # Keep this longer than the previous 45s limit; browser has a separate 135s limit.
+    # Keep this longer than the previous 45s limit; browser has a separate 315s limit.
     started = time.monotonic()
     deadline = started + CLAUDE_REQUEST_TIMEOUT_S
 
@@ -488,12 +488,12 @@ async def claude_call(session, api_key, payload):
         # Do not reveal keys, prompts, URLs with parameters, or error object text.
         elapsed = time.monotonic() - started
         raise ProviderError('unavailable',
-            f'Claude API 응답 시간 초과 (경과 {elapsed:.1f}초, 서버 제한 120초). ' 
+            f'Claude API 응답 시간 초과 (경과 {elapsed:.1f}초, 서버 제한 {CLAUDE_REQUEST_TIMEOUT_S:g}초). '
             '첫 구조화 출력 요청은 지연될 수 있습니다. 재시도 전 연결을 확인하세요.') from exc
     except aiohttp.ClientError as exc:
         raise ProviderError('unavailable',
             f'Claude API 네트워크/SSL/연결 오류 ({type(exc).__name__}). ' 
-            '키 인증 및 120초 제한 초과와는 다른 오류입니다.') from exc
+            f'키 인증 및 {CLAUDE_REQUEST_TIMEOUT_S:g}초 제한 초과와는 다른 오류입니다.') from exc
     except InvalidOutput as exc:
         raise ProviderError('invalid_response', 'Claude API 응답을 JSON으로 읽을 수 없습니다.') from exc
 
@@ -1003,7 +1003,7 @@ def cli_ask(url,question,session_id=''):
     request=urllib.request.Request(url.rstrip('/')+'/api/ask',data=payload,headers={'Content-Type':'application/json'})
     try:
         try:
-            response=urllib.request.urlopen(request,timeout=150)
+            response=urllib.request.urlopen(request,timeout=CLAUDE_REQUEST_TIMEOUT_S + 30)
         except urllib.error.HTTPError as exc:
             response=exc
         with response:

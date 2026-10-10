@@ -13,11 +13,13 @@ import pac_diagnostic_console as pac
 def test_timeout_setting_and_browser_limit():
     import inspect
     src=inspect.getsource(pac.claude_call)
-    assert pac.CLAUDE_REQUEST_TIMEOUT_S == 120
+    assert pac.CLAUDE_REQUEST_TIMEOUT_S == 300
     assert 'timeout=CLAUDE_REQUEST_TIMEOUT_S' in src
     assert 'ClientTimeout(total=45)' not in src
     page=(pathlib.Path(pac.__file__).parent/'web'/'dashboard.html').read_text()
-    assert 'controller.abort(),135000' in page
+    assert 'controller.abort(),315000' in page
+    assert 'Claude 사용 시 최대 300초(5분)' in page
+    assert 'timeout=CLAUDE_REQUEST_TIMEOUT_S + 30' in pathlib.Path(pac.__file__).read_text()
 
 
 def test_network_error_is_not_called_a_timeout():
@@ -49,5 +51,6 @@ def test_real_timeout_is_labelled_distinctly(monkeypatch):
                     await pac.claude_call(s, 'private-key', {})
                 assert x.value.status=='unavailable'
                 assert '응답 시간 초과' in str(x.value)
+                assert '서버 제한 300초' in str(x.value)
                 assert 'private-key' not in str(x.value)
     asyncio.run(scenario())

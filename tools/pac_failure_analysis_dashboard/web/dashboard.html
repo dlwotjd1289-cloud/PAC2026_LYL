@@ -356,8 +356,8 @@ function renderLive(live,integration){
 function localError(text){return {schema_version:'1.0',request_id:'',session_id:sessionId,created_at:new Date().toISOString(),status:'unavailable',source:'local',answer:text,confirmed_facts:[],hypotheses:[],checks:[],actions:[],missing_information:[],context:latestContext||{run_id:'',collected_at:new Date().toISOString(),last_log_age_s:null,observation:'no_logs',stop_confirmed:null,suction:'unknown',evidence:[],alert:{id:'',text:'',source:''}},control:{mode:'read_only',command_executed:false}};}
 async function ask(q){
  if(busy||!q.trim())return;busy=true;$('send').disabled=true;$('analyze').disabled=true;$('new').disabled=true;
- $('request-status').textContent='진단 질문 처리 중… (Claude 사용 시 최대 120초, 첫 JSON 스키마 준비 시 지연 가능) · 읽기 전용';
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),135000);
+ $('request-status').textContent='진단 질문 처리 중… (Claude 사용 시 최대 300초(5분), 첫 JSON 스키마 준비 시 지연 가능) · 읽기 전용';
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),315000);
  try{const response=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,session_id:sessionId}),signal:controller.signal});const r=await response.json();sessionId=r.session_id||sessionId;renderReply(r,q);$('request-status').textContent=labels[r.status]||r.status;}
  catch(e){renderReply(localError('진단 서버 연결 또는 응답 수신에 실패했습니다. 로봇 상태를 확인했다는 의미는 아닙니다.'),q);$('request-status').textContent='응답 수신 실패';}
  finally{clearTimeout(timer);busy=false;$('send').disabled=false;$('analyze').disabled=false;$('new').disabled=false;}
