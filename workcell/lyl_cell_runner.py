@@ -333,7 +333,7 @@ class Runner:
             queue = []
             for b in self.boxes[:next_k]:
                 p = cell.pose(b.name)
-                if b.picked or p is None:
+                if b.picked or getattr(b, "done", False) or p is None:
                     continue
                 x, y, z = p[:3]
                 if z > g["roller_top_z"] + b.field.truth.size.z + 0.08 or abs(y - g["conveyor_y"]) > 0.45:
