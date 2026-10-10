@@ -193,7 +193,8 @@ class Cell:
         z = subprocess.run([sys.executable, str(WORKCELL / "scripts/make_box_sdf_v44.py"), "--size", *map(str, size),
                             "--mass", str(mass), "--out", str(sdf), "--dent", str(dent)],
                            capture_output=True, text=True, check=True).stdout.strip()
-        create = subprocess.run(["ros2", "pkg", "prefix", "ros_gz_sim"], capture_output=True, text=True).stdout.strip()
+        create = subprocess.run(["ros2", "pkg", "prefix", "ros_gz_sim"], capture_output=True,
+                                text=True, check=True).stdout.strip()
         g = self.cfg["geometry"]
         for _ in range(2):
             r = subprocess.run([f"{create}/lib/ros_gz_sim/create", "-name", box, "-file", str(sdf),
@@ -202,6 +203,9 @@ class Cell:
             if r.returncode == 0:
                 break
             time.sleep(1.0)
+        else:
+            detail = (r.stderr or r.stdout or "no output").strip()[-400:]
+            raise RuntimeError(f"Gazebo spawn failed for {box} (rc {r.returncode}): {detail}")
         for _ in range(3):   # release the gripper's detachable joint for this box (V4.6 cycle)
             subprocess.run(["ign", "topic", "-t", f"/pac/gripper/{box}/detach", "-m", "ignition.msgs.Empty", "-p", " "],
                            capture_output=True, timeout=5)
@@ -295,6 +299,16 @@ class Runner:
         return Pose3D("pallet", x - ox - dx / 2, y - oy - dy / 2, max(0.0, z - self.g["pallet_deck_z"] - dz / 2), yaw=yaw_snap)
 
     # ------------------------------------------------------------------ conveyor thread
+    def conveyor_worker(self):
+        try:
+            self.conveyor_loop()
+        except Exception as error:  # noqa: BLE001 - propagate daemon failure to the main loop
+            self.fail(None, f"conveyor failed: {error}")
+            try:
+                self.cell.roller(0.0)
+            except Exception as stop_error:  # noqa: BLE001
+                self.run.log(f"[conveyor] ERROR stop command failed: {stop_error}")
+
     def conveyor_loop(self):
         g, c, cell = self.g, self.c, self.cell
         sx, stop_face = g["scale_centre_x"], g["stopper_face_x"]
@@ -304,6 +318,10 @@ class Runner:
         tare_from = cell.clock
         cell.spin(1.5)
         tare, n = cell.force_mean(tare_from)
+        if tare is None or n <= 0 or not math.isfinite(tare):
+            raise RuntimeError("No valid scale samples for tare; check /pac/scale/wrench bridge")
+        if cell.clock <= tare_from:
+            raise RuntimeError("Simulation clock is not advancing; check /clock and Gazebo")
         self.run.log(f"[conveyor] tare {tare:.1f} N ({n} samples), speed {self.v:.3f} m/s ({self.omega:.2f} rad/s), "
                      f"pitch {self.pitch_m:.2f} m, max queue {c['max_queue']}")
         while not self.stop:
@@ -355,7 +373,11 @@ class Runner:
 
     def spawn(self, b, dent):
         t = b.field.truth
-        self.cell.spawn(b.name, (t.size.x, t.size.y, t.size.z), t.weight_kg, dent)
+        try:
+            self.cell.spawn(b.name, (t.size.x, t.size.y, t.size.z), t.weight_kg, dent)
+        except Exception as error:  # noqa: BLE001 - never report a failed spawn as on_conveyor
+            self.fail(b, f"spawn failed: {error}")
+            return
         self.run.event(b.name, "on_conveyor", reason=f"{t.box_id} {t.sku_id}" + (" damaged" if dent else ""))
         self.run.log(f"[conveyor] {b.name} = {t.box_id} {t.sku_id} {t.size.x:.2f}x{t.size.y:.2f}x{t.size.z:.2f} m "
                      f"{t.weight_kg:.1f} kg spawned" + (f" (damaged: {dent * 1000:.0f} mm dent)" if dent else ""))
@@ -498,6 +520,8 @@ class Runner:
             if prev is not None:
                 # measured duration: the next search gets 70 % of it (at most 8 s)
                 core.observe_duration(prev, time.time() - started)
+        if self.stop:
+            return
         self.run.log(f"[pipeline] PASS order finished: placed {sum(len(b) for _, b in core.closed) + len(sm.placed)}, "
                      f"inspection {len(core.inspection)}, pallets {self.pallet_no}")
 
@@ -511,7 +535,7 @@ class Runner:
 
     def fail(self, b, why):
         self.run.log(f"[executor] ERROR cell stopped at {b.name if b else '-'}: {why} "
-                     "(MoveIt recovery exhausted; operator check, then python3 scripts/moveit_reset_v44.py)")
+                     "(operator check required; resolve the reported failure before restarting)")
         if b is not None:
             self.run.event(b.name, "failed", success=False, reason=why)
         self.stop = True
@@ -595,7 +619,7 @@ class Runner:
 
     def main(self):
         self.run.log(f"[pipeline] order {self.args.scenario}: {len(self.boxes)} boxes, run {self.run.dir}")
-        conv = threading.Thread(target=self.conveyor_loop, daemon=True)
+        conv = threading.Thread(target=self.conveyor_worker, daemon=True)
         conv.start()
         exit_code, outcome = 1, "failed"
         try:

@@ -8,6 +8,7 @@ set -eo pipefail
 LYL="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WC="${PAC_WORKCELL_REPO:-$(cd "$LYL/../pac2026_integrated" && pwd)}"
 DATASET="${1:?usage: run_gazebo_demo.sh DATASET SCENARIO [COUNT]}"; SCEN="${2:?scenario}"; COUNT="${3:-0}"
+PORT="${PAC_DASHBOARD_PORT:-4183}"
 source /opt/ros/humble/setup.bash
 source "$WC/ros2_ws/install/setup.bash"
 set -u
@@ -54,20 +55,49 @@ setsid python3 -u "$WC/scripts/box_perception_v44.py" > "$LOG/perception.log" 2>
 
 echo ">>> [5/6] 적재 실행기 시작 (주문 $SCEN)"
 MANIFEST="$WC/logs/pac_dashboard_integration/active_run.json"
-before="$(stat -c %Y "$MANIFEST" 2>/dev/null || echo 0)"
+before="$(stat -c %y "$MANIFEST" 2>/dev/null || echo missing)"
 python3 -u "$LYL/workcell/lyl_cell_runner.py" --dataset "$DATASET" --scenario "$SCEN" --count "$COUNT" \
   2>&1 | tee "$LOG/runner.log" &
 RUNNER=$!
-for _ in $(seq 60); do [[ "$(stat -c %Y "$MANIFEST" 2>/dev/null || echo 0)" != "$before" ]] && break; sleep 1; done
+for _ in $(seq 60); do
+  [[ "$(stat -c %y "$MANIFEST" 2>/dev/null || echo missing)" != "$before" ]] && break
+  kill -0 "$RUNNER" 2>/dev/null || break
+  sleep 1
+done
+if [[ "$(stat -c %y "$MANIFEST" 2>/dev/null || echo missing)" == "$before" ]]; then
+  echo "ERROR: 현재 실행 등록을 확인하지 못했습니다. 이전 대시보드를 새 실행으로 열지 않습니다 ($LOG/runner.log)." >&2
+  # Preserve a running robot task; report failure without silently abandoning it.
+  if wait "$RUNNER"
+  then exit 1
+  else exit "$?"
+  fi
+fi
 
-echo ">>> [6/6] API 연동 대시보드 V5.3 (http://127.0.0.1:4183)"
+echo ">>> [6/6] API 연동 대시보드 V5.3 (http://127.0.0.1:$PORT)"
 for p in $(pgrep -f 'pac_diagnostic_console.py serve|pac_ros_observer.py run|pac_camera_bridge_watch.py'); do kill "$p" 2>/dev/null || true; done
 sleep 1
 setsid nohup bash "$LYL/tools/pac_failure_analysis_dashboard/start_dashboard_integrated.sh" "$WC" \
   > "$LOG/dashboard.log" 2>&1 < /dev/null &
-for _ in $(seq 30); do curl -sf http://127.0.0.1:4183/api/state >/dev/null && break; sleep 1; done
-[[ "${NO_BROWSER:-0}" == 1 ]] || (xdg-open http://127.0.0.1:4183 >/dev/null 2>&1 &)
+DASHBOARD_PID=$!
+dashboard_status=1
+for _ in $(seq 30); do
+  if curl --max-time 2 -sf "http://127.0.0.1:$PORT/api/state" >/dev/null; then
+    dashboard_status=0
+    break
+  fi
+  kill -0 "$DASHBOARD_PID" 2>/dev/null || break
+  sleep 1
+done
+if [[ "$dashboard_status" == 0 ]]; then
+  [[ "${NO_BROWSER:-0}" == 1 ]] || (xdg-open "http://127.0.0.1:$PORT" >/dev/null 2>&1 &)
+else
+  echo "ERROR: 대시보드 시작 실패 ($LOG/dashboard.log). 적재 실행 결과를 기다립니다." >&2
+fi
 if wait "$RUNNER"; then
+  if [[ "${dashboard_status:-0}" != 0 ]]; then
+    echo "ERROR: 적재 실행은 종료됐지만 대시보드 시작에 실패했습니다 ($LOG/dashboard.log)." >&2
+    exit "$dashboard_status"
+  fi
   echo "RUN DONE: Gazebo / RViz / dashboard stay up. Logs $LOG"
 else
   runner_status=$?

@@ -154,7 +154,7 @@ class ExecutionFailureTests(unittest.TestCase):
 
     def test_shell_wait_preserves_runner_failure(self):
         script = (ROOT / 'workcell/run_gazebo_demo.sh').read_text()
-        tail = script[script.index('if wait "$RUNNER"; then'):]
+        tail = script[script.rindex('if wait "$RUNNER"; then'):]
         for status in (0, 9):
             with self.subTest(status=status):
                 result = subprocess.run(['bash', '-c',
@@ -162,6 +162,55 @@ class ExecutionFailureTests(unittest.TestCase):
                     capture_output=True, text=True)
                 assert result.returncode == status
                 assert ('RUN DONE:' in result.stdout) is (status == 0)
+
+
+    def test_missing_tare_stops_worker_without_spawning(self):
+        r = bare_runner(self.tmp_path)
+        r.g = {'scale_centre_x': 0., 'stopper_face_x': 1.}
+        r.c = {}
+        r.boxes = []
+        r.cell = SimpleNamespace(clock=1., spin=Mock(), force_mean=Mock(return_value=(None, 0)),
+                                 roller=Mock(), spawn=Mock())
+        r.conveyor_worker()
+        assert r.stop
+        r.cell.spawn.assert_not_called()
+        r.cell.roller.assert_called_once_with(0.0)
+        assert 'No valid scale samples' in str(r.run.log.call_args_list)
+
+    def test_stalled_clock_stops_worker(self):
+        r = bare_runner(self.tmp_path)
+        r.g = {'scale_centre_x': 0., 'stopper_face_x': 1.}
+        r.c = {}
+        r.boxes = []
+        r.cell = SimpleNamespace(clock=1., spin=Mock(), force_mean=Mock(return_value=(0., 5)),
+                                 roller=Mock())
+        r.conveyor_worker()
+        assert r.stop
+        assert 'clock is not advancing' in str(r.run.log.call_args_list)
+
+    def test_spawn_failure_is_not_logged_as_success(self):
+        r = bare_runner(self.tmp_path)
+        r.cell = SimpleNamespace(spawn=Mock(side_effect=RuntimeError('service unavailable')))
+        b = SimpleNamespace(name='box_02', field=SimpleNamespace(truth=SimpleNamespace(
+            size=SimpleNamespace(x=.2, y=.2, z=.2), weight_kg=1.)))
+        r.spawn(b, 0.)
+        assert r.stop
+        assert all(call.args[1] != 'on_conveyor' for call in r.run.event.call_args_list)
+        assert r.run.event.call_args.args[1] == 'failed'
+
+    def test_gazebo_create_retries_exhausted_raises_before_detach(self):
+        cell = runner_module.Cell.__new__(runner_module.Cell)
+        cell.run = SimpleNamespace(dir=self.tmp_path)
+        cell.cfg = {'geometry': {'inlet_x': 0., 'conveyor_y': 0.}}
+        failures = [SimpleNamespace(stdout='0.9', returncode=0),
+                    SimpleNamespace(stdout='/opt/ros/humble', returncode=0),
+                    SimpleNamespace(stdout='', stderr='create rejected', returncode=1),
+                    SimpleNamespace(stdout='', stderr='create rejected', returncode=1)]
+        with patch.object(runner_module.subprocess, 'run', side_effect=failures) as proc, \
+             patch.object(runner_module.time, 'sleep'):
+            with self.assertRaisesRegex(RuntimeError, 'create rejected'):
+                cell.spawn('box_01', (.2, .2, .2), 1., 0.)
+            assert proc.call_count == 4
 
 
 if __name__ == '__main__':
