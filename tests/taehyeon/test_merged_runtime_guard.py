@@ -14,10 +14,11 @@ from pac_runtime.order import configure_cell
 from th_helpers import REPO
 
 
-def test_merged_runtime_profile_keeps_fixed_capacity_and_seven_seconds():
+def test_merged_runtime_profile_keeps_fixed_capacity_and_eight_second_cap():
     cfg = load_runtime_config(REPO / "config/jaesung_taehyeon/runtime.yaml")
     assert cfg.capacity.model == "jaesung_site" and cfg.capacity.site == "general"
-    assert cfg.planning.max_budget_s == cfg.planning.decision_budget_s == 7
+    # 2026-10-10: search during 70 % of the robot action, at most 8 s (was 80 % / 7 s)
+    assert cfg.planning.max_budget_s == cfg.planning.decision_budget_s == 8 and cfg.planning.ahead_ratio == 0.7
     size = Size3D(.4, .3, .2)
     cell = CellSpec((), {"K": 1}, Size3D(1.1, 1.1, 1.5),
                     {"K": SkuSpec("K", size, 7., (0.,), 123.)}, {"K": (2., 7.)})

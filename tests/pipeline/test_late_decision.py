@@ -36,4 +36,5 @@ def test_late_command(use_late, action):
 
 def test_integration_profile_keeps_late_commands():
     planning = load_runtime_config(REPO / "config/jaesung_taehyeon/runtime.yaml").planning
-    assert planning.decision_budget_s == 7.0 and planning.use_late_command is True
+    assert planning.decision_budget_s == 8.0 and planning.max_budget_s == 8.0 and planning.ahead_ratio == 0.7
+    assert planning.use_late_command is True

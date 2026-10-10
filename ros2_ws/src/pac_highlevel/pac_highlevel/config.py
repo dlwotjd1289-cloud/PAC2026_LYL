@@ -18,6 +18,15 @@ class BufferConfig:
     travel_time_s: tuple = ()
     base_travel_time_s: float = 4.0
     per_slot_extra_s: float = 1.0
+    # Largest box a slot holds, footprint (short side, long side) in m; empty = any box.
+    # Real cell (Gazebo V4.6 buffer table): 0.37 m between posts, 0.64 m shelf depth.
+    max_footprint_m: tuple = ()
+
+    def fits(self, size):
+        if not self.max_footprint_m:
+            return True
+        short, long_ = sorted((size.x, size.y))
+        return short <= self.max_footprint_m[0] and long_ <= self.max_footprint_m[1]
     # "박스당 1회만" (one buffer visit per box) holds by construction: only
     # the current conveyor box can be buffered and a retrieved box is placed.
 

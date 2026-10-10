@@ -4,8 +4,8 @@ set -euo pipefail
 ROOT="${1:-$HOME/AHEAD/pac2026_integrated}"
 ROOT="$(cd "$ROOT" && pwd)"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source /opt/ros/humble/setup.bash
-source "$ROOT/ros2_ws/install/setup.bash"
+set +u; source /opt/ros/humble/setup.bash; set -u   # ROS setup files read unset variables
+set +u; source "$ROOT/ros2_ws/install/setup.bash"; set -u   # ROS setup files read unset variables
 OUT="$ROOT/logs/pac_dashboard_integrated_v53"
 mkdir -p "$OUT"
 STATE="$OUT/telemetry.json"

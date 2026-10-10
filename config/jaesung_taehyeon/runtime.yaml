@@ -36,12 +36,12 @@ runtime:
     min_support_ratio: 0.6
     heightmap_cell_m: 0.01
   planning:
-    ahead_ratio: 0.8
-    max_budget_s: 7.0
+    ahead_ratio: 0.7          # decide during 70 % of the robot action (10 s cycle -> 7 s)
+    max_budget_s: 8.0         # search at most 8 s; the rest is left to path generation
     min_budget_s: 0.3
     wait_budget_s: 1.5
     duration_smoothing: 0.3
-    decision_budget_s: 7.0
+    decision_budget_s: 8.0
     use_late_command: true   # over 7 s: go on with the best command computed so far
   robot_checks_per_option: 12
   seed: 0

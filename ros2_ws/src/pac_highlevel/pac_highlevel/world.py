@@ -323,7 +323,7 @@ class PalletizingWorld:
         current, buffered = self.options()
         if self.current is not None:
             mask[0] = current.feasible
-            mask[1] = self.free_slot() is not None
+            mask[1] = self.free_slot() is not None and self.config.buffer.fits(self.current.box.size)
         for i, opt in enumerate(buffered):
             mask[2 + i] = opt is not None and opt.feasible
         return mask

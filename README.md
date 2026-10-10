@@ -6,7 +6,10 @@ PAC 2026 Mission 1 (AHEAD 혼합 박스 적재). **주문 데이터 생성 → �
 pip install numpy pyyaml pytest       # Python 3.10+, ROS 불필요
 ./run_pipeline.sh                     # 6개 주문 x 40박스 → runs/<시각>/summary.md
 pip install aiohttp && ./run_dashboard.sh   # 마지막 주문의 실패 분석·3D 대시보드 → http://127.0.0.1:4183
+bash workcell/run_gazebo_demo.sh <DATASET> S0002 6   # Gazebo V4.6 + MoveIt + 대시보드 (docs/04)
 ```
+
+**오늘 작업 전체 기록과 남은 일: [docs/05_worklog_20261010.md](docs/05_worklog_20261010.md)**
 
 ## 전체 흐름
 
@@ -50,7 +53,7 @@ pip install aiohttp && ./run_dashboard.sh   # 마지막 주문의 실패 분석�
 
 통합 묶음(`integration/jaesung-taehyeon-algorithm`, `6f12962`) 그대로입니다. 위치는 태현님 후보 생성과 `LayerPlacer`가 고르고, 재성님 비선형 점수(`C = E − φS(S) − φL(L)`)는 **선택을 바꾸지 않고** 주문이 끝난 뒤 선택된 동작마다 계산합니다. 자세한 식과 한계는 [docs/02_stacking_algorithm.md](docs/02_stacking_algorithm.md).
 
-설정은 `config/jaesung_taehyeon/`(통합 프로필): N=5 행동 탐색, 결정 제한 7초, 다음 5개 박스 모두 실측 무게·규격 사용, 박스별 허용 하중.
+설정은 `config/jaesung_taehyeon/`(통합 프로필): 행동 탐색(가상 셀 기본 N=5, `--visible 3`으로 작업셀과 같은 3개), 결정 시간 = 로봇 동작 시간 × 70 %·상한 8초, 미리보기 박스 실측 무게·규격 사용, 박스별 허용 하중, 로봇 HDR50-22 관절 90 %·수직 0.6 m/s(1회 동작 ≤ 5초).
 
 ## 실행
 
@@ -139,14 +142,15 @@ python3 -m pytest -q
 | `tools/algorithm_integration/` | 5항목 사후 평가 | 재성 |
 | `tools/pac_failure_analysis_dashboard/` | 실패 분석·Claude·3D 대시보드 V5.3 | 재성 |
 | `config/` | `default.yaml`(공통), `jaesung_taehyeon/`(통합 프로필), `taehyeon/`, `donghan/perception_depth.yaml`, `pipeline.yaml` | |
-| `docs/` | 인식·적재 알고리즘 설명 | |
+| `workcell/` | Gazebo V4.6 실행기, 실행 스크립트, 대체 플래너, V4.6 패치 | 통합 |
+| `docs/` | 인식·적재 알고리즘, 검증, Gazebo, 작업 기록 | |
 
 ROS 2 Humble에서는 `ros2_ws`를 colcon으로 빌드한 뒤 `ros2 launch pac_runtime merged_algorithm.launch.py repo:=<이 저장소> order_file:=<주문.json>`으로 같은 코어를 노드로 띄울 수 있습니다. 이번 정리에서 ROS 실행은 확인하지 않았습니다.
 
 ## 알려진 한계
 
 - **가상 환경 결과입니다.** 깊이 영상은 합성이고, 로봇은 기구학 모델, 놓기 결과는 확률 모델입니다. 실물 운반 안전성, 실제 카메라 성능을 증명하지 않습니다.
-- **결정이 7초를 넘어도 멈추지 않습니다** (`planning.use_late_command: true`, 2026-10-10). 그때까지 계산된 최선의 명령을 그대로 실행하고 `decision_budget_exceeded_used_best`로 셉니다. 실시간 보장이 아니라 늦은 결정을 허용하는 것이며, 7초를 넘긴 시간은 `decisions`에 그대로 남습니다. `false`로 두면 예전처럼 주문을 멈춥니다.
+- **결정이 상한(8초)을 넘어도 멈추지 않습니다** (`planning.use_late_command: true`). 그때까지 계산된 최선 명령으로 진행하고 `decision_budget_exceeded_used_best`로 셉니다. 실시간 보장은 아닙니다.
 - **동한님 ROI 설정과 스토퍼 위치가 3 mm 겹칩니다.** `perception_depth.yaml`의 ROI는 x 0.232에서 끝나는데 스토퍼 면은 0.235라, 스토퍼에 닿은 박스는 항상 "시야 경계에 걸림"으로 판정되어 파손 판정이 생략됩니다. 가상 카메라에는 스토퍼가 없으므로 `config/pipeline.yaml`에서 ROI를 0.26까지 넓혔습니다. 실제 셀 값은 동한님 확인이 필요합니다 (`tests/pipeline` 에 재현 시험 있음).
 - 컨베이어 좌표계 원점, 파손 임계값(눌림 12 mm 등)은 동한님 문서의 가정값 그대로입니다.
-- Gazebo V4.6 작업셀·MoveIt 실행기, 동한님 학습 랭커(`pac_planning`)는 이 저장소에 포함하지 않았습니다.
+- Gazebo V4.6 작업셀 자체는 팀 저장소(V4.6 최종본)를 쓰고, 이 저장소에는 연결 코드(`workcell/`)와 수정 패치만 있습니다. Gazebo에서 한 주문을 끝까지 적재한 기록은 아직 없습니다(docs/05). 동한님 학습 랭커(`pac_planning`)는 포함하지 않았습니다.

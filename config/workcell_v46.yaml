@@ -1,0 +1,57 @@
+schema_version: 1
+# Gazebo V4.6 cell driven by the PAC2026 LYL algorithm (workcell/lyl_cell_runner.py).
+# Algorithm settings come from config/jaesung_taehyeon/ (integration profile); only what the
+# real cell forces is overridden here.
+
+algorithm_overrides:
+  highlevel:
+    buffer:
+      slots: 4                       # V4.6 buffer_rack (bays 1-2) + buffer_rack_ext (bays 3-4)
+      max_footprint_m: [0.37, 0.64]  # 0.38 m between posts, 0.66 m shelf depth (cycle script check)
+    repack:
+      enabled: false                 # MoveIt executor picks only from the conveyor or the buffer
+    close:
+      visible_boxes: 3               # 3 vs 5 ahead: same placements and fill on 6 x 40-box orders
+  lookahead:
+    horizon: 3
+    measured_preview_count: 3
+
+conveyor:
+  scale_to_stopper_s: 15.0           # box travel, weighing section -> pick stopper (stops excluded)
+  pitch_s: 5.0                       # spacing between boxes, in conveyor running time
+  max_queue: 3                       # boxes between scale and stopper (= 15 s / 5 s); infeed stops when full
+  roller_radius_m: 0.035
+  settle_s: 1.0                      # line stopped, before the weight / depth frame is taken
+  weigh_window_s: 0.5
+
+geometry:                            # Gazebo V4.6 world (ahead_workcell_v4_6_two_cam.sdf)
+  world: ahead_workcell_v4_2_physical_scale
+  world_sdf: ros2_ws/src/pac_simulation/worlds/ahead_workcell_v4_6_two_cam.sdf
+  inlet_x: -6.635
+  conveyor_y: 1.20
+  roller_top_z: 0.895
+  scale_centre_x: -5.985
+  stopper_face_x: -0.845
+  scale_camera: {x: -5.985, y: 1.20, z: 2.20}  # straight down, rgbd_camera
+  pallet_near_corner: [-0.55, 0.65]  # pallet frame origin (world), axes = world; robot at y < 0
+  pallet_deck_z: 0.15
+  buffer_bays:                       # slot index -> bay centre (x, y); slot 0 nearest the robot
+    - [-0.835, 0.44]
+    - [-1.265, 0.44]
+    - [-1.735, 0.44]
+    - [-2.165, 0.44]
+  buffer_shelf_top_z: 0.9425
+  ng_zone: [[-1.45, -0.65], [-0.60, 0.05]]   # x, y ranges (floor)
+
+perception:
+  config: config/donghan/perception_depth.yaml
+  roi_xy_m: [-0.50, 0.50, -0.375, 0.375]     # scale frame: origin on the roller top at the scale centre
+  min_box_height_m: 0.06             # parts of the scale frame stand 35 mm above the rollers
+  dent_m: 0.025                      # damaged carton drawn with a top pit this deep
+
+robot:
+  gripper: pad
+  # MoveIt velocity scaling = V4.6 defaults. 0.5 tried 2026-10-10: joint 5 tracking error 0.21 rad >
+  # 0.20 rad tolerance at Gazebo RTF 0.28 -> CONTROL_FAILED on the first move (and on every recovery move)
+  free_speed: 0.18
+  cart_speed: 0.20

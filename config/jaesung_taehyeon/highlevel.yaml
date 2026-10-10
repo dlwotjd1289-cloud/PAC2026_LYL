@@ -7,7 +7,7 @@ highlevel:
     base_travel_time_s: 4.0
     per_slot_extra_s: 1.0
   timing:
-    place_time_s: 8.0        # assumed HDR50-22 pick-and-place cycle
+    place_time_s: 4.5        # HDR50-22 pick-and-place cycle, robot_check.yaml speeds (4.1-4.6 s, 2026-10-10)
     pallet_change_time_s: 60.0
     repack_move_time_s: 12.0
   reward:                    # unit: pallet-volume fractions (same as donghan's future value)

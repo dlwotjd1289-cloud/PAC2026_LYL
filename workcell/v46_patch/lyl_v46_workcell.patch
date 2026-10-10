@@ -1,0 +1,512 @@
+diff -ruN a/ros2_ws/src/pac_simulation/worlds/ahead_workcell_v4_6_two_cam.sdf b/ros2_ws/src/pac_simulation/worlds/ahead_workcell_v4_6_two_cam.sdf
+--- a/ros2_ws/src/pac_simulation/worlds/ahead_workcell_v4_6_two_cam.sdf	2026-10-10 10:32:07.709426417 +0900
++++ b/ros2_ws/src/pac_simulation/worlds/ahead_workcell_v4_6_two_cam.sdf	2026-10-10 10:32:07.711426026 +0900
+@@ -4511,6 +4511,175 @@
+         </visual>
+       </link>
+     </model>
++    <model name="buffer_rack_ext">
++      <!-- V4.4 (2026-10-09): 2-bay buffer table for top-down suction - top shelf (1.5 m) removed,
++           posts cut to 0.97 m (2.75 cm edge stops above the 0.92 m shelf); bays at x -0.215 / +0.215. -->
++      <static>true</static>
++      <!-- buffer bays 3-4: same module as buffer_rack, upstream of it (opposite to conveyor travel); existing rack unchanged -->
++      <pose>-1.95 0.44 0 0 0 0</pose>
++      <link name="rack_link">
++        <collision name="post_fl_collision">
++          <pose>-0.43 -0.300 0.485 0 0 0</pose>
++          <geometry>
++            <box>
++              <size>0.055 0.055 0.97</size>
++            </box>
++          </geometry>
++        </collision>
++        <visual name="post_fl_visual">
++          <pose>-0.43 -0.300 0.485 0 0 0</pose>
++          <geometry>
++            <box>
++              <size>0.055 0.055 0.97</size>
++            </box>
++          </geometry>
++          <material>
++            <ambient>0.15 0.17 0.19 1</ambient>
++            <diffuse>0.30 0.33 0.36 1</diffuse>
++          </material>
++        </visual>
++        <collision name="post_fr_collision">
++          <pose>0.43 -0.300 0.485 0 0 0</pose>
++          <geometry>
++            <box>
++              <size>0.055 0.055 0.97</size>
++            </box>
++          </geometry>
++        </collision>
++        <visual name="post_fr_visual">
++          <pose>0.43 -0.300 0.485 0 0 0</pose>
++          <geometry>
++            <box>
++              <size>0.055 0.055 0.97</size>
++            </box>
++          </geometry>
++          <material>
++            <ambient>0.15 0.17 0.19 1</ambient>
++            <diffuse>0.30 0.33 0.36 1</diffuse>
++          </material>
++        </visual>
++        <collision name="post_bl_collision">
++          <pose>-0.43 0.300 0.485 0 0 0</pose>
++          <geometry>
++            <box>
++              <size>0.055 0.055 0.97</size>
++            </box>
++          </geometry>
++        </collision>
++        <visual name="post_bl_visual">
++          <pose>-0.43 0.300 0.485 0 0 0</pose>
++          <geometry>
++            <box>
++              <size>0.055 0.055 0.97</size>
++            </box>
++          </geometry>
++          <material>
++            <ambient>0.15 0.17 0.19 1</ambient>
++            <diffuse>0.30 0.33 0.36 1</diffuse>
++          </material>
++        </visual>
++        <collision name="post_br_collision">
++          <pose>0.43 0.300 0.485 0 0 0</pose>
++          <geometry>
++            <box>
++              <size>0.055 0.055 0.97</size>
++            </box>
++          </geometry>
++        </collision>
++        <visual name="post_br_visual">
++          <pose>0.43 0.300 0.485 0 0 0</pose>
++          <geometry>
++            <box>
++              <size>0.055 0.055 0.97</size>
++            </box>
++          </geometry>
++          <material>
++            <ambient>0.15 0.17 0.19 1</ambient>
++            <diffuse>0.30 0.33 0.36 1</diffuse>
++          </material>
++        </visual>
++        <collision name="divider_front_collision">
++          <pose>0 -0.300 0.485 0 0 0</pose>
++          <geometry>
++            <box>
++              <size>0.04 0.04 0.97</size>
++            </box>
++          </geometry>
++        </collision>
++        <visual name="divider_front_visual">
++          <pose>0 -0.300 0.485 0 0 0</pose>
++          <geometry>
++            <box>
++              <size>0.04 0.04 0.97</size>
++            </box>
++          </geometry>
++          <material>
++            <ambient>0.15 0.17 0.19 1</ambient>
++            <diffuse>0.30 0.33 0.36 1</diffuse>
++          </material>
++        </visual>
++        <collision name="divider_back_collision">
++          <pose>0 0.300 0.485 0 0 0</pose>
++          <geometry>
++            <box>
++              <size>0.04 0.04 0.97</size>
++            </box>
++          </geometry>
++        </collision>
++        <visual name="divider_back_visual">
++          <pose>0 0.300 0.485 0 0 0</pose>
++          <geometry>
++            <box>
++              <size>0.04 0.04 0.97</size>
++            </box>
++          </geometry>
++          <material>
++            <ambient>0.15 0.17 0.19 1</ambient>
++            <diffuse>0.30 0.33 0.36 1</diffuse>
++          </material>
++        </visual>
++        <collision name="shelf_0_collision">
++          <pose>0 0 0.34 0 0 0</pose>
++          <geometry>
++            <box>
++              <size>0.90 0.66 0.045</size>
++            </box>
++          </geometry>
++        </collision>
++        <visual name="shelf_0_visual">
++          <pose>0 0 0.34 0 0 0</pose>
++          <geometry>
++            <box>
++              <size>0.90 0.66 0.045</size>
++            </box>
++          </geometry>
++          <material>
++            <ambient>0.15 0.17 0.19 1</ambient>
++            <diffuse>0.30 0.33 0.36 1</diffuse>
++          </material>
++        </visual>
++        <collision name="shelf_1_collision">
++          <pose>0 0 0.92 0 0 0</pose>
++          <geometry>
++            <box>
++              <size>0.90 0.66 0.045</size>
++            </box>
++          </geometry>
++        </collision>
++        <visual name="shelf_1_visual">
++          <pose>0 0 0.92 0 0 0</pose>
++          <geometry>
++            <box>
++              <size>0.90 0.66 0.045</size>
++            </box>
++          </geometry>
++          <material>
++            <ambient>0.15 0.17 0.19 1</ambient>
++            <diffuse>0.30 0.33 0.36 1</diffuse>
++          </material>
++        </visual>
++      </link>
++    </model>
+         <model name="ng_zone">
+       <!-- V4.6: NG area for damaged / crushed boxes (floor marking, no collision) -->
+       <static>true</static>
+@@ -4531,15 +4700,16 @@
+         <visual name="pole"><pose>-5.985 2.00 1.15 0 0 0</pose><geometry><box><size>0.07 0.07 2.30</size></box></geometry></visual>
+         <visual name="arm"><pose>-5.985 1.60 2.27 0 0 0</pose><geometry><box><size>0.06 0.80 0.06</size></box></geometry></visual>
+         <visual name="camera_housing"><pose>-5.985 1.20 2.20 0 1.5708 0</pose><geometry><box><size>0.20 0.11 0.095</size></box></geometry></visual>
+-        <sensor name="scale_top_camera" type="camera">
++        <sensor name="scale_top_camera" type="rgbd_camera">
+           <pose>-5.985 1.20 2.20 0 1.5708 0</pose>
+           <always_on>true</always_on>
+           <update_rate>5</update_rate>
+-          <topic>/pac/scale_camera/image</topic>
++          <topic>/pac/scale_camera</topic>
+           <camera>
+             <horizontal_fov>1.00</horizontal_fov>
+             <image><width>1280</width><height>960</height><format>R8G8B8</format></image>
+             <clip><near>0.10</near><far>6.0</far></clip>
++            <depth_camera><clip><near>0.10</near><far>6.0</far></clip></depth_camera>
+           </camera>
+         </sensor>
+       </link>
+diff -ruN a/scripts/make_box_sdf_v44.py b/scripts/make_box_sdf_v44.py
+--- a/scripts/make_box_sdf_v44.py	2026-10-10 10:32:07.725423288 +0900
++++ b/scripts/make_box_sdf_v44.py	2026-10-10 10:32:07.726423093 +0900
+@@ -8,6 +8,31 @@
+ """
+ import argparse
+ 
++PART = """      <collision name="collision{k}"><pose>{px:.4f} {py:.4f} {pz:.4f} 0 0 0</pose>
++        <geometry><box><size>{sx:.4f} {sy:.4f} {sz:.4f}</size></box></geometry>
++        <surface><friction><ode><mu>0.9</mu><mu2>0.9</mu2></ode></friction></surface>
++      </collision>
++      <visual name="visual{k}"><pose>{px:.4f} {py:.4f} {pz:.4f} 0 0 0</pose>
++        <geometry><box><size>{sx:.4f} {sy:.4f} {sz:.4f}</size></box></geometry>
++        <material><ambient>0.55 0.32 0.12 1</ambient><diffuse>0.75 0.48 0.22 1</diffuse></material>
++      </visual>
++"""
++
++
++def shapes(x, y, z, dent=0.0):
++    """One box, or (dent > 0, damaged carton) a body dent lower with a rim of full height around a
++    pit in the middle of the top face: the top-view depth camera must find the dent itself."""
++    if dent <= 0.0:
++        parts = [(0.0, 0.0, 0.0, x, y, z)]
++    else:
++        w = min(x, y) / 4                      # rim width
++        zb, zr = -dent / 2, z / 2 - dent / 2   # body centre, rim centre
++        parts = [(0.0, 0.0, zb, x, y, z - dent),
++                 ((x - w) / 2, 0.0, zr, w, y, dent), (-(x - w) / 2, 0.0, zr, w, y, dent),
++                 (0.0, (y - w) / 2, zr, x - 2 * w, w, dent), (0.0, -(y - w) / 2, zr, x - 2 * w, w, dent)]
++    return "".join(PART.format(k="" if k == 0 else f"_{k}", px=px, py=py, pz=pz, sx=sx, sy=sy, sz=sz)
++                   for k, (px, py, pz, sx, sy, sz) in enumerate(parts))
++
+ ROLLER_TOP_Z = 0.895
+ 
+ TEMPLATE = """<?xml version="1.0"?>
+@@ -19,15 +44,7 @@
+         <mass>{m:.6f}</mass>
+         <inertia><ixx>{ixx:.8f}</ixx><iyy>{iyy:.8f}</iyy><izz>{izz:.8f}</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+       </inertial>
+-      <collision name="collision">
+-        <geometry><box><size>{x:.4f} {y:.4f} {z:.4f}</size></box></geometry>
+-        <surface><friction><ode><mu>0.9</mu><mu2>0.9</mu2></ode></friction></surface>
+-      </collision>
+-      <visual name="visual">
+-        <geometry><box><size>{x:.4f} {y:.4f} {z:.4f}</size></box></geometry>
+-        <material><ambient>0.55 0.32 0.12 1</ambient><diffuse>0.75 0.48 0.22 1</diffuse></material>
+-      </visual>
+-    </link>
++{shapes}    </link>
+     <!-- Dev/test-only ground-truth pose (perception uses the cameras). Gazebo 6 publishes the
+          model's own pose only with publish_nested_model_pose=true. -->
+     <plugin filename="ignition-gazebo-pose-publisher-system" name="gz::sim::systems::PosePublisher">
+@@ -49,10 +66,11 @@
+     ap.add_argument("--size", type=float, nargs=3, required=True, metavar=("X", "Y", "Z"))
+     ap.add_argument("--mass", type=float, required=True)
+     ap.add_argument("--out", required=True)
++    ap.add_argument("--dent", type=float, default=0.0, help="damaged carton: top pit depth [m] (0 = intact)")
+     a = ap.parse_args()
+     x, y, z = a.size
+     m = a.mass
+-    open(a.out, "w").write(TEMPLATE.format(m=m, x=x, y=y, z=z, ixx=m * (y * y + z * z) / 12,
++    open(a.out, "w").write(TEMPLATE.format(m=m, shapes=shapes(x, y, z, a.dent), ixx=m * (y * y + z * z) / 12,
+                                            iyy=m * (x * x + z * z) / 12, izz=m * (x * x + y * y) / 12))
+     print(f"{ROLLER_TOP_Z + z / 2 + 0.03:.4f}")
+ 
+diff -ruN a/scripts/make_world_v46.py b/scripts/make_world_v46.py
+--- a/scripts/make_world_v46.py	2026-10-10 10:32:07.715425244 +0900
++++ b/scripts/make_world_v46.py	2026-10-10 10:32:07.716425048 +0900
+@@ -32,6 +32,7 @@
+ FIRST_DOWNSTREAM = -3.465       # V4.4 first roller after the scale (roller_06m)
+ PICK_END_X = -0.85              # downstream end of the conveyor (pick stopper side)
+ BUFFER_XY = (-1.05, 0.44)       # buffer table centre (bays at x -/+ 0.215): x -1.50..-0.60, y 0.11..0.77
++BUFFER_EXT_DX = 0.90            # second 2-bay rack module, this far upstream (bays 3-4)
+ BUFFER_DEPTH = 0.66             # was 0.58: extended toward the conveyor (rail edge y 0.7875, 1.75 cm clear)
+ NG_ZONE = ((-1.45, -0.65), (-0.60, 0.05))   # red floor area for damaged / crushed boxes (robot side of the
+                                              # buffer; IK + CCTV view checked offline 2026-10-10)
+@@ -151,6 +152,15 @@
+         rk = rk.replace(f"<pose>{x} 0.26 0.485 0 0 0</pose>", f"<pose>{x} {half:.3f} 0.485 0 0 0</pose>")
+     assert rk.count(f"{half:.3f} 0.485") == 12, rk.count(f"{half:.3f} 0.485")   # 6 posts+dividers x (collision, visual)
+     s = s[:a4] + rk + s[b4:]
++    # buffer bays 3-4 (2026-10-10): a second, identical rack module upstream of the first one
++    # (opposite to conveyor travel), so the existing rack and everything else stay where they are.
++    e4 = s.index("</model>", a4) + len("</model>")
++    ext = s[a4:e4].replace('<model name="buffer_rack">', '<model name="buffer_rack_ext">', 1)
++    ext = ext.replace(f"<pose>{BUFFER_XY[0]} {BUFFER_XY[1]} 0 0 0 0</pose>",
++                      f"<pose>{BUFFER_XY[0] - BUFFER_EXT_DX:.2f} {BUFFER_XY[1]} 0 0 0 0</pose>", 1)
++    ext = ext.replace("<static>true</static>", "<static>true</static>\n      <!-- buffer bays 3-4: same module as "
++                      "buffer_rack, upstream of it (opposite to conveyor travel); existing rack unchanged -->", 1)
++    s = s[:e4] + "\n    " + ext + s[e4:]
+ 
+     # --- NG zone (damaged / crushed boxes): red floor marking next to the buffer table -----------
+     (nx0, nx1), (ny0, ny1) = NG_ZONE
+@@ -197,15 +207,16 @@
+         <visual name="pole"><pose>{fnum(sx)} 2.00 1.15 0 0 0</pose><geometry><box><size>0.07 0.07 2.30</size></box></geometry></visual>
+         <visual name="arm"><pose>{fnum(sx)} 1.60 2.27 0 0 0</pose><geometry><box><size>0.06 0.80 0.06</size></box></geometry></visual>
+         <visual name="camera_housing"><pose>{fnum(sx)} 1.20 2.20 0 1.5708 0</pose><geometry><box><size>0.20 0.11 0.095</size></box></geometry></visual>
+-        <sensor name="scale_top_camera" type="camera">
++        <sensor name="scale_top_camera" type="rgbd_camera">
+           <pose>{fnum(sx)} 1.20 2.20 0 1.5708 0</pose>
+           <always_on>true</always_on>
+           <update_rate>{CAM_HZ}</update_rate>
+-          <topic>/pac/scale_camera/image</topic>
++          <topic>/pac/scale_camera</topic>
+           <camera>
+             <horizontal_fov>1.00</horizontal_fov>
+             <image><width>1280</width><height>960</height><format>R8G8B8</format></image>
+             <clip><near>0.10</near><far>6.0</far></clip>
++            <depth_camera><clip><near>0.10</near><far>6.0</far></clip></depth_camera>
+           </camera>
+         </sensor>
+       </link>
+diff -ruN a/scripts/moveit_pick_place_v44.py b/scripts/moveit_pick_place_v44.py
+--- a/scripts/moveit_pick_place_v44.py	2026-10-10 10:32:07.720424266 +0900
++++ b/scripts/moveit_pick_place_v44.py	2026-10-10 10:32:07.721424070 +0900
+@@ -60,8 +60,8 @@
+ # in Gazebo the position-controlled joints abort (PATH_TOLERANCE_VIOLATED, 0.2 rad) on a long
+ # PTP move at 0.4 (home -> PICK, 2026-10-09); 0.25 / 0.20 are 2.5x / 2x the earlier 0.1.
+ # Contact moves stay slow.
+-FREE_SPEED = 0.18                 # Pilz PTP, empty gripper (0.25 aborted on a long return move once)
+-CART_SPEED = 0.20                 # straight lines (lift / transfer / lower, with the box)
++FREE_SPEED = float(os.environ.get("PAC_FREE_SPEED", "0.18"))   # Pilz PTP, empty gripper (0.25 aborted on a long return move once)
++CART_SPEED = float(os.environ.get("PAC_CART_SPEED", "0.20"))   # straight lines (lift / transfer / lower, with the box)
+ CONTACT_SPEED = 0.10              # final approach and cup press on the box, last part of lowering
+ SLOW_LOWER_M = 0.06               # lowered slowly between the neighbours
+ # Idle pose between cycles: above the PICK zone (cup down, facing the conveyor), offset toward the
+@@ -104,6 +104,10 @@
+     ("buffer_shelf", (BUFFER_X, BUFFER_Y, 0.92), (0.90, BUFFER_DEPTH, 0.045)),
+     ("camera_pole", (-0.60, 1.95, 1.17), (0.24, 0.24, 2.34)),
+ ]
++# V4.6 buffer bays 3-4 (buffer_rack_ext, 2026-10-10): the same rack module BUFFER_EXT_DX upstream.
++BUFFER_EXT_DX = float(os.environ.get("PAC_BUFFER_EXT_DX", "0"))
++if BUFFER_EXT_DX:
++    SCENE += [(f"bufext_{n}", (c[0] - BUFFER_EXT_DX, c[1], c[2]), sz) for n, c, sz in SCENE if n.startswith("buffer_")]
+ 
+ 
+ class Failure(RuntimeError):
+@@ -808,7 +812,7 @@
+                     if seg_rect_dist(b[:2], place[:2], p_[0][:2], psz[n], yaw_of(p_[1])) <= half]
+         stack_top = max([PALLET_TOP_Z] + corridor)
+         transfer_z = max(top + APPROACH_M, stack_top + STACK_CLEAR_M + size[2])
+-        via_ptp = pick_from == "buffer" or place_on == "buffer"
++        via_ptp = pick_from == "buffer" or place_on in ("buffer", "ng")
+         if via_ptp:
+             # Buffer table: joint-space move (the straight line would pass over the robot base).
+             transfer_z = max(top + APPROACH_M, place[2] + size[2] / 2 + APPROACH_M)
+@@ -895,7 +899,7 @@
+                 self.line((target[0], target[1], transfer_z), place_yaw, "retreat up (collision-checked)")
+             finally:
+                 self.set_allowed_collision(BOX_ID, "suction_cup_link", False)
+-            if pose_source != "camera":
++            if pose_source != "camera" or place_on == "ng":
+                 break
+             if NO_WRIST:
+                 c_b, c_q = self.far_check(box, size, place, place_yaw, others=known_tops)
+@@ -1068,7 +1072,8 @@
+     ap.add_argument("--pick-from", choices=("conveyor", "buffer"), default="conveyor")
+     ap.add_argument("--pick-pose", type=float, nargs=4, metavar=("X", "Y", "Z", "YAW"),
+                     help="box centre / yaw on the buffer table (--pick-from buffer)")
+-    ap.add_argument("--place-on", choices=("pallet", "buffer"), default="pallet")
++    # ng: floor of the V4.6 NG zone (damaged / unreadable boxes), no camera check of the placed box
++    ap.add_argument("--place-on", choices=("pallet", "buffer", "ng"), default="pallet")
+     ap.add_argument("--mass", type=float, help="measured box mass [kg] (gripper payload check)")
+     ap.add_argument("--gripper", choices=tuple(GRIPPERS), default=os.environ.get("PAC_GRIPPER", "pad"))
+     ap.add_argument("--extra-placed-json", help="JSON {name: [sx, sy, sz]} of other boxes to keep clear "
+diff -ruN a/scripts/moveit_prepare_v46.py b/scripts/moveit_prepare_v46.py
+--- a/scripts/moveit_prepare_v46.py	1970-01-01 09:00:00.000000000 +0900
++++ b/scripts/moveit_prepare_v46.py	2026-10-10 10:32:07.739420551 +0900
+@@ -0,0 +1,34 @@
++#!/usr/bin/env python3
++"""Before the first box: load the workcell planning scene into MoveIt and move the empty arm to
++READY (above PICK, cup down), so RViz shows the cell and the first pick starts from the pick pose.
++Requires Gazebo V4.6 and hdr50_moveit_v44.launch.py running. Commands only the robot arm."""
++import sys
++
++import rclpy
++from rclpy.signals import SignalHandlerOptions
++
++from moveit_pick_place_v44 import SCENE, Failure, MoveItPickPlace, box_object
++
++
++def main():
++    rclpy.init(signal_handler_options=SignalHandlerOptions.NO)
++    node = MoveItPickPlace()
++    try:
++        if not node.move_ac.wait_for_server(timeout_sec=20.0) or not node.scene_cli.wait_for_service(timeout_sec=20.0):
++            raise Failure("move_group not available")
++        node.apply_scene(objects=[box_object(n, c, s) for n, c, s in SCENE])
++        print(f">>> [MoveIt 준비] 작업셀 환경 {len(SCENE)}개 충돌 물체 등록", flush=True)
++        node.spin_for(1.0)
++        node.go_ready("move to READY above PICK (start)")
++        print(">>> [MoveIt 준비] 대기 자세(READY, PICK 위) 이동 완료", flush=True)
++        return 0
++    except Failure as exc:
++        print(f"MOVEIT PREPARE FAIL: {exc}", flush=True)
++        return 1
++    finally:
++        node.destroy_node()
++        rclpy.shutdown()
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff -ruN a/scripts/run_generator_cycle_v44.sh b/scripts/run_generator_cycle_v44.sh
+--- a/scripts/run_generator_cycle_v44.sh	2026-10-10 10:32:07.730422311 +0900
++++ b/scripts/run_generator_cycle_v44.sh	2026-10-10 10:32:07.731422115 +0900
+@@ -197,7 +197,7 @@
+   fi
+   local plan_rc=0 out="$RUN_DIR/${1}_plan.json" err="$RUN_DIR/${1}_plan.err"
+   rm -f "$out"
+-  python3 -I "$ROOT/scripts/ahead_planner_bridge_v44.py" plan --state "$STATE" --box-id "$1" --sku "$2" \
++  python3 -I "${PLANNER_BRIDGE:-$ROOT/scripts/ahead_planner_bridge_v44.py}" plan --state "$STATE" --box-id "$1" --sku "$2" \
+     --catalog "$CATALOG" --mass "$3" --perception "$4" --remaining-json "$5" "${extra[@]}" \
+     --out "$out" > "$RUN_DIR/${1}_plan.stdout" 2> "$err" || plan_rc=$?
+   if [[ "$plan_rc" == 20 ]] && grep -q '^PLAN FAIL: NO_SLOT (' "$err"; then
+diff -ruN a/scripts/vertical_descent_v46.py b/scripts/vertical_descent_v46.py
+--- a/scripts/vertical_descent_v46.py	2026-10-10 10:32:07.736421137 +0900
++++ b/scripts/vertical_descent_v46.py	2026-10-10 10:32:07.737420942 +0900
+@@ -20,6 +20,9 @@
+ PLAN_EDGE_M = 0.0005
+ ALIGN_EDGE_M = 0.0005
+ EXEC_EDGE_M = 0.0015  # +0.5 mm initial alignment budget <= 2 mm moving-box face margin
++# Pressing the cup onto the box (contact, collision checks off): up to the 2 mm face margin itself.
++# 1.53 mm stopped the first pick of the LYL Gazebo run (2026-10-10); alignment / plan limits unchanged.
++PRESS_EDGE_M = 0.0020
+ DESCENT_SPEED = 0.05
+ 
+ 
+@@ -112,14 +115,14 @@
+             "edge_bound_m": xy + 2 * radius * math.sin(angle / 2)}
+ 
+ 
+-def classify(plan_edge, samples, complete):
++def classify(plan_edge, samples, complete, exec_edge=EXEC_EDGE_M):
+     if plan_edge > PLAN_EDGE_M:
+         return "PLAN_GEOMETRY: MoveIt returned a nonvertical path; execution blocked"
+     if not complete or len(samples) < 2:
+         return "INCONCLUSIVE: insufficient or interrupted controller evidence"
+-    if max(s["desired"]["edge_bound_m"] for s in samples) > EXEC_EDGE_M:
++    if max(s["desired"]["edge_bound_m"] for s in samples) > exec_edge:
+         return "CONTROLLER_REFERENCE: desired path departs from audited MoveIt waypoints"
+-    if max(s["actual"]["edge_bound_m"] for s in samples) > EXEC_EDGE_M:
++    if max(s["actual"]["edge_bound_m"] for s in samples) > exec_edge:
+         return "EXECUTION_TRACKING: desired is vertical, actual joints deviate (control/physics side)"
+     return "WITHIN_LIMITS: sampled TCP path within limits; box slip/physics needs box-pose evidence"
+ 
+@@ -129,6 +132,7 @@
+         from control_msgs.msg import JointTrajectoryControllerState
+         from rclpy.qos import qos_profile_sensor_data
+         self.node, self.Failure = node, failure_type
++        self.exec_edge_m = EXEC_EDGE_M
+         self.latest = None
+         self.model = None
+         self.active_trace = None
+@@ -179,9 +183,9 @@
+                 sample["gazebo_box"] = {"xyz": xyz.tolist(), "quat": list(quat),
+                                          "age_wall_s": time.monotonic() - received}
+             self.active_trace["samples"].append(sample)
+-            if am["edge_bound_m"] > EXEC_EDGE_M or dm["edge_bound_m"] > EXEC_EDGE_M:
++            if am["edge_bound_m"] > self.exec_edge_m or dm["edge_bound_m"] > self.exec_edge_m:
+                 self.stop(f"vertical edge deviation: desired {dm['edge_bound_m']*1000:.2f}, "
+-                          f"actual {am['edge_bound_m']*1000:.2f} mm (limit {EXEC_EDGE_M*1000:.1f} mm)")
++                          f"actual {am['edge_bound_m']*1000:.2f} mm (limit {self.exec_edge_m*1000:.1f} mm)")
+         except Exception as exc:
+             self.stop(f"vertical telemetry invalid: {exc}")
+ 
+@@ -436,6 +440,7 @@
+             return
+         if float(z) > now[2, 3]:
+             raise self.Failure(f"{what}: target is above current TCP; descent blocked")
++        self.exec_edge_m = PRESS_EDGE_M if what.startswith("press") else EXEC_EDGE_M
+         try:
+             self.node.line((self.reference[0, 3], self.reference[1, 3], float(z)), yaw, what,
+                            avoid_collisions=avoid_collisions, speed=DESCENT_SPEED,
+@@ -452,7 +457,7 @@
+         peak = max((e["edge_bound_m"] for e in errors), default=float("inf"))
+         self.active_trace = {"step": what, "axis_tcp": self.reference.tolist(),
+                              "radius_m": self.radius, "plan_max_edge_m": peak,
+-                             "limits_m": {"plan": PLAN_EDGE_M, "execution": EXEC_EDGE_M},
++                             "limits_m": {"plan": PLAN_EDGE_M, "execution": self.exec_edge_m},
+                              "samples": [], "planned": [
+                                  {"positions": list(pt.positions), "velocities": list(pt.velocities),
+                                   "accelerations": list(pt.accelerations),
+@@ -477,7 +482,7 @@
+         Require distinct, fresh controller stamps and a settled goal reference.
+         """
+         trace = self.active_trace
+-        evidence = {"limit_z_m": 0.001, "limit_edge_m": EXEC_EDGE_M,
++        evidence = {"limit_z_m": 0.001, "limit_edge_m": self.exec_edge_m,
+                     "max_wall_s": max_wall_s, "required_fresh_samples": required_samples,
+                     "samples": [], "result": "PENDING"}
+         trace["endpoint_settle"] = evidence
+@@ -515,11 +520,11 @@
+                 if actual_dz < -0.001:
+                     self.stop(f"descent endpoint overshoot {actual_dz * 1000:.2f} mm; do not contact/release")
+                     break
+-                if edge > EXEC_EDGE_M:
++                if edge > self.exec_edge_m:
+                     self.stop(f"descent endpoint lateral/orientation edge {edge * 1000:.2f} mm exceeds limit")
+                     break
+                 inside = (abs(actual_dz) <= 0.001 and abs(desired_dz) <= 0.001
+-                          and edge <= EXEC_EDGE_M)
++                          and edge <= self.exec_edge_m)
+                 consecutive = consecutive + 1 if inside else 0
+                 entry["consecutive_within_limit"] = consecutive
+                 if consecutive >= required_samples:
+@@ -562,7 +567,7 @@
+         # The old WITHIN_LIMITS covers XY/tilt only; never present a failed
+         # endpoint-Z check as a successful full descent.
+         lateral = classify(trace["plan_max_edge_m"], trace["samples"],
+-                           (completed or bool(self.failure)) and not trace.get("stream_stale"))
++                           (completed or bool(self.failure)) and not trace.get("stream_stale"), self.exec_edge_m)
+         trace["lateral_assessment"] = lateral
+         trace["assessment"] = ("ENDPOINT_Z_FAIL: " + self.failure if completed and self.failure
+                                else lateral)

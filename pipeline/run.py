@@ -39,7 +39,7 @@ import yaml  # noqa: E402
 from pac_candidates import load_candidate_config  # noqa: E402
 from pac_highlevel import load_highlevel_config, load_lookahead_config, load_policy  # noqa: E402
 from pac_perception.perception_config import load_perception_config  # noqa: E402
-from pac_robot_check import RobotFeasibility  # noqa: E402
+from pac_robot_check import RobotFeasibility, load_robot_check_config  # noqa: E402
 from pac_runtime import RuntimeCore, RuntimeLoop, load_runtime_config  # noqa: E402
 from pac_runtime.order import configure_cell  # noqa: E402
 from pac_runtime.ros_node import make_runtime_ranker  # noqa: E402
@@ -162,7 +162,8 @@ def run_order(spec, index, ds, cfg, configs, out_dir, dashboard=None):
                                        pallet_xy=tuple(c["pallet_xy_m"])), rt)
     make, made = perception_factory(cell, cfg, rt, f"{c['seed']}:{spec.scenario_id}")
     ranker = make_runtime_ranker(cfg["run"]["ranker"], merged_config_path=str(PROFILE / "merged.yaml"))
-    loop = RuntimeLoop(cell, cc, hl, rt, RobotFeasibility(), load_policy("lookahead", la, config=hl),
+    robot = RobotFeasibility(load_robot_check_config(PROFILE / "robot_check.yaml"))
+    loop = RuntimeLoop(cell, cc, hl, rt, robot, load_policy("lookahead", la, config=hl),
                        ranker=ranker, log_events=True, perception_factory=make, core_class=RecordingCore)
 
     row = {"scenario_id": spec.scenario_id, "family": spec.family, "ordered": len(spec.arrivals),
@@ -260,6 +261,8 @@ def main(argv=None):
     ap.add_argument("--boxes", type=int, help="override generator.boxes_per_scenario")
     ap.add_argument("--per-family", type=int, help="override generator.sample_per_family")
     ap.add_argument("--wall-limit", type=int, help="override run.order_wall_limit_s")
+    ap.add_argument("--visible", type=int,
+                    help="boxes seen ahead on the conveyor (look-ahead horizon and measured previews; profile: 5)")
     ap.add_argument("--no-dashboard", action="store_true",
                     help="do not write logs/pipeline/<run> nor register it with the dashboard")
     args = ap.parse_args(argv)
@@ -277,6 +280,13 @@ def main(argv=None):
     configs = (load_candidate_config(PROFILE / "candidates.yaml"), load_highlevel_config(PROFILE / "highlevel.yaml"),
                load_lookahead_config(PROFILE / "lookahead.yaml"), load_runtime_config(PROFILE / "runtime.yaml"),
                load_virtual_config(REPO / "config/taehyeon/virtual_data.yaml"))
+    if args.visible:
+        # conveyor boxes seen ahead = look-ahead horizon = measured previews (one setting)
+        cc, hl, la, rt, vc = configs
+        hl = replace(hl, close=replace(hl.close, visible_boxes=args.visible))
+        la = replace(la, horizon=args.visible, measured_preview_count=args.visible)
+        configs = (cc, hl, la, rt, vc)
+        cfg["run"]["visible_boxes"] = args.visible
     chosen = [(i, s) for i, s in enumerate(ds.scenarios) if not args.ids or s.scenario_id in args.ids]
     if args.ids and len(chosen) != len(args.ids):
         sys.exit(f"unknown ids: {set(args.ids) - {s.scenario_id for _, s in chosen}}")
