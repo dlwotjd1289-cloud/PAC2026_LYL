@@ -11,6 +11,7 @@ import math
 import os
 from pathlib import Path
 import sys
+import subprocess
 
 
 def main() -> int:
@@ -28,6 +29,17 @@ def main() -> int:
     if not source.is_file():
         print(f"Original V4.6 executor missing: {source}", file=sys.stderr)
         return 2
+    virtual = os.environ.get("PAC_VIRTUAL_SUCTION", "0")
+    if virtual not in ("0", "1"):
+        print("PAC_VIRTUAL_SUCTION must be 0 or 1", file=sys.stderr)
+        return 2
+    if virtual == "1":
+        from virtual_suction import require_gazebo
+        try:
+            require_gazebo()
+        except (OSError, RuntimeError, subprocess.SubprocessError) as exc:
+            print(f"가상 흡착 시작 실패: {exc}", file=sys.stderr)
+            return 2
     # The original script imports its sibling vertical_descent_v46 module.
     sys.path.insert(0, str(source.parent))
     spec = importlib.util.spec_from_file_location("_lyl_original_moveit_v46", source)
@@ -37,6 +49,10 @@ def main() -> int:
     module.PRESS_M = press_m
     print(f"[LYL executor] press depth {press_m * 1000:.3f} mm; "
           "original motion and safety checks retained (commissioning setting)", flush=True)
+    if virtual == "1":
+        from virtual_suction import install
+        install(module)
+        print(">>> [흡착] PAC_VIRTUAL_SUCTION=1; Gazebo 가상 부착, 물리 흡착 검증 아님", flush=True)
     return module.main()
 
 
