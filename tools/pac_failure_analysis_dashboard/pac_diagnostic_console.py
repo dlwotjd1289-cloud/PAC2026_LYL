@@ -31,6 +31,7 @@ ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_API_VERSION = "2023-06-01"
 DEFAULT_MODEL = "gpt-4o-mini"  # legacy compatibility only
 DEFAULT_CLAUDE_MODEL = "claude-haiku-5-5"
+CLAUDE_REQUEST_TIMEOUT_S = 120.0  # shared by the initial attempt and one receive retry
 MAX_QUESTION = 2000
 MAX_EVIDENCE = 24
 MAX_HISTORY = 8
@@ -437,32 +438,52 @@ async def claude_call(session, api_key, payload):
     import aiohttp
     headers = {'x-api-key': api_key,
                'anthropic-version': ANTHROPIC_API_VERSION,
-               'content-type': 'application/json'}
+               'content-type': 'application/json', 'Accept-Encoding': 'identity'}
     workspace = os.environ.get('ANTHROPIC_WORKSPACE_ID', '').strip()
     if workspace:
         headers['anthropic-workspace-id'] = workspace
     # A cold structured-output schema can take extra time to compile on the API side.
     # Keep this longer than the previous 45s limit; browser has a separate 135s limit.
     started = time.monotonic()
+    deadline = started + CLAUDE_REQUEST_TIMEOUT_S
+
+    async def receive_with_retry():
+        for attempt in range(2):
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise asyncio.TimeoutError
+            try:
+                async with session.post(ANTHROPIC_API_URL, headers=headers,
+                                        json={**payload, 'stream': False},
+                                        timeout=aiohttp.ClientTimeout(total=remaining),
+                                        allow_redirects=False) as response:
+                    if response.status != 200:
+                        messages = {400: 'Claude 요청을 거부했습니다. 모델 또는 스키마를 확인하세요.',
+                                    401: 'Claude API 키 인증에 실패했습니다.',
+                                    402: 'Claude API 크레딧 또는 결제 상태를 확인하세요.',
+                                    403: 'Claude API 접근 권한을 확인하세요.',
+                                    404: 'Claude 모델 ID를 찾지 못했습니다.',
+                                    429: 'Claude API 호출 제한 또는 사용 한도에 도달했습니다.',
+                                    529: 'Claude API 서버가 과부하 상태입니다.'}
+                        raise ProviderError('unavailable', messages.get(response.status,
+                                           f'Claude API 요청 실패: HTTP {response.status}.'))
+                    # read(n) can return an incomplete JSON prefix before the next packet.
+                    # Read to EOF while retaining a strict response-size bound.
+                    body = bytearray()
+                    async for chunk in response.content.iter_chunked(64 * 1024):
+                        body.extend(chunk)
+                        if len(body) > 256 * 1024:
+                            raise ProviderError('invalid_response', 'Claude API 응답 크기가 허용 범위를 넘었습니다.')
+                    return strict_json(bytes(body))
+            except (aiohttp.ClientPayloadError, aiohttp.ServerDisconnectedError) as exc:
+                # Retry only incomplete/disconnected responses, never HTTP auth errors,
+                # certificate errors or other connection failures. TLS stays verified.
+                if attempt:
+                    raise ProviderError('unavailable',
+                        'Claude API 응답 수신이 중단되어 1회 재시도했지만 완료하지 못했습니다. '
+                        '네트워크 연결을 확인한 뒤 다시 질문해 주세요.') from exc
     try:
-        async with session.post(ANTHROPIC_API_URL,
-                                headers=headers,
-                                json=payload, timeout=aiohttp.ClientTimeout(total=120),
-                                allow_redirects=False) as response:
-            if response.status != 200:
-                messages = {400: 'Claude 요청을 거부했습니다. 모델 또는 스키마를 확인하세요.',
-                            401: 'Claude API 키 인증에 실패했습니다.',
-                            402: 'Claude API 크레딧 또는 결제 상태를 확인하세요.',
-                            403: 'Claude API 접근 권한을 확인하세요.',
-                            404: 'Claude 모델 ID를 찾지 못했습니다.',
-                            429: 'Claude API 호출 제한 또는 사용 한도에 도달했습니다.',
-                            529: 'Claude API 서버가 과부하 상태입니다.'}
-                raise ProviderError('unavailable', messages.get(response.status,
-                                   f'Claude API 요청 실패: HTTP {response.status}.'))
-            body = await response.content.read(256*1024+1)
-            if len(body) > 256*1024:
-                raise ProviderError('invalid_response', 'Claude API 응답 크기가 허용 범위를 넘었습니다.')
-            return strict_json(body)
+        return await asyncio.wait_for(receive_with_retry(), timeout=CLAUDE_REQUEST_TIMEOUT_S)
     except (asyncio.TimeoutError, aiohttp.ServerTimeoutError) as exc:
         # Do not reveal keys, prompts, URLs with parameters, or error object text.
         elapsed = time.monotonic() - started

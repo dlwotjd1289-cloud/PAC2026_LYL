@@ -67,9 +67,9 @@ def check_moveit_nonzero_exit_cannot_pass_on_log_marker(tmp_path, monkeypatch):
     b = SimpleNamespace(name='box_02', obs=SimpleNamespace(weight_kg=1.0),
         field=SimpleNamespace(truth=SimpleNamespace(size=SimpleNamespace(x=.2, y=.2, z=.2))))
     def failed_process(*args, **kwargs):
-        kwargs['stdout'].write('MOVEIT PICK&PLACE PASS\nsubsequent failure\n')
-        return SimpleNamespace(returncode=1)
-    monkeypatch.setattr(runner_module.subprocess, 'run', failed_process)
+        kwargs['log_path'].write_text('MOVEIT PICK&PLACE PASS\nsubsequent failure\n')
+        return 1
+    monkeypatch.setattr(runner_module, 'run_logged', failed_process)
     ok, measured, text = r.moveit(b, 'test', [])
     assert not ok
     assert measured is None

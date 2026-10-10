@@ -55,3 +55,4 @@ robot:
   # 0.20 rad tolerance at Gazebo RTF 0.28 -> CONTROL_FAILED on the first move (and on every recovery move)
   free_speed: 0.18
   cart_speed: 0.20
+  press_depth_m: 0.001               # initial 1 mm contact trial; physical success not yet validated (allowed 0..0.002)

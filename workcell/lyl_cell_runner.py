@@ -36,7 +36,9 @@ import time
 LYL = Path(__file__).resolve().parents[1]
 WORKCELL = Path(os.environ.get("PAC_WORKCELL_REPO", LYL.parent / "pac2026_integrated")).resolve()
 sys.path[:0] = [str(p) for p in sorted((LYL / "ros2_ws/src").glob("pac_*")) if (p / p.name).is_dir()]
-sys.path[:0] = [str(LYL / "tools/virtual_data"), str(LYL / "tools/pac_failure_analysis_dashboard")]
+sys.path[:0] = [str(LYL), str(LYL / "tools/virtual_data"), str(LYL / "tools/pac_failure_analysis_dashboard")]
+
+from workcell.process_stream import run_logged
 
 import numpy as np  # noqa: E402
 import yaml  # noqa: E402
@@ -422,20 +424,31 @@ class Runner:
         env = dict(os.environ, PERCEPTION_EXTERNAL="1", PAC_LAYOUT="v46", PAC_SCALE_SHIFT_M="-2.185", PAC_NO_WRIST="1",
                    PAC_BUFFER_EXT_DX="0.90",
                    PAC_BUFFER_X="-1.05", PAC_BUFFER_Y="0.44", PAC_BUFFER_DEPTH="0.66", IGN_IP=os.environ.get("IGN_IP", "127.0.0.1"),
-                   PAC_FREE_SPEED=str(self.cfg["robot"]["free_speed"]), PAC_CART_SPEED=str(self.cfg["robot"]["cart_speed"]))
-        cmd = ["bash", str(WORKCELL / "scripts/run_moveit_pick_place_v44.sh"), "--box", b.name,
+                   PAC_FREE_SPEED=str(self.cfg["robot"]["free_speed"]), PAC_CART_SPEED=str(self.cfg["robot"]["cart_speed"]),
+                   PAC_PRESS_M=str(self.cfg["robot"].get("press_depth_m", 0.001)))
+        # The old cycle runner's next-box gate has no producer in this integration.
+        env.pop("SPAWN_GATE", None)
+        cmd = ["bash", str(LYL / "workcell/run_pick_place_v46.sh"), "--box", b.name,
                "--size", *map(str, (t.size.x, t.size.y, t.size.z)), "--mass", f"{b.obs.weight_kg:.3f}",
                "--gripper", self.cfg["robot"]["gripper"], "--pose-source", "camera", "--placed-state", str(self.state_file),
                "--catalog", str(LYL / "tools/ahead_dataset_generator/config/default.yaml"),
                "--extra-placed-json", str(obstacles), "--result-json", str(result), *extra]
         started = time.time()
-        with log.open("w") as f:
-            rc = subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT, env=env, cwd=WORKCELL).returncode
+        self.run.log(f"[executor] START {b.name} {tag}; 목적지 인자(박스 중심, world m): {' '.join(extra)}; log {log}")
+        phase = {"last": "MoveIt 실행기 준비", "since": time.monotonic()}
+
+        def progress(line):
+            if re.search(r">>>|\[vertical\]|\[alignment\]|\[pickup\]|\[suction\]|\[camera\]|FAIL|STOP|recover", line):
+                phase.update(last=line.strip()[:220], since=time.monotonic())
+                self.run.log("    " + line.strip())
+
+        def waiting(elapsed):
+            self.run.log(f"[executor] 진행 대기 {elapsed:.0f}s; 마지막 출력 후 {time.monotonic()-phase['since']:.0f}s: "
+                         f"{phase['last']} (실제 동작 성공을 뜻하지 않음)")
+
+        rc = run_logged(cmd, log_path=log, env=env, cwd=WORKCELL, on_line=progress, on_wait=waiting)
         text = log.read_text(errors="replace")
         ok = rc == 0 and "MOVEIT PICK&PLACE PASS" in text
-        for line in text.splitlines():
-            if re.search(r"복구|\[camera\]|recover", line):
-                self.run.log("    " + line.strip()[:200])
         self.run.log(f"[executor] {'PASS' if ok else 'FAIL'} {b.name} {tag} ({time.time() - started:.0f} s, rc {rc})")
         measured = json.loads(result.read_text()) if result.exists() else None
         return ok, measured, text

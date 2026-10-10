@@ -13,7 +13,8 @@ import pac_diagnostic_console as pac
 def test_timeout_setting_and_browser_limit():
     import inspect
     src=inspect.getsource(pac.claude_call)
-    assert 'ClientTimeout(total=120)' in src
+    assert pac.CLAUDE_REQUEST_TIMEOUT_S == 120
+    assert 'timeout=CLAUDE_REQUEST_TIMEOUT_S' in src
     assert 'ClientTimeout(total=45)' not in src
     page=(pathlib.Path(pac.__file__).parent/'web'/'dashboard.html').read_text()
     assert 'controller.abort(),135000' in page

@@ -19,6 +19,8 @@ V4.6 패치·ROS 빌드가 준비된 노트북에서 저장소 루트의 명령 
 bash run_all.sh
 ```
 
+첫 박스 압착 정지 대응 설정은 누르기 깊이 1 mm입니다(기존 6 mm). 편차 감시 한계는 유지하며 아직 Gazebo 성공을 확인한 값은 아니므로, 업데이트 후 먼저 `bash run_all.sh --count 1`로 시험하세요. 목적지와 MoveIt 진행 단계는 실행 창에 즉시 표시됩니다. 진단 수집은 `python3 workcell/collect_pick_diagnostics.py`로 실행합니다.
+
 Claude API 키를 숨김 입력하면 데이터 생성 → 박스 인식 → 적재 판단 → Gazebo/MoveIt 실행 → API 대시보드가 이어집니다. 기본은 **S0002 주문 전체**이며, Enter로 키 입력을 건너뛰면 오프라인 대시보드로 실행합니다. 키는 파일에 저장하지 않습니다. 이미 `ANTHROPIC_API_KEY`가 있으면 다시 묻지 않습니다. 실제 API 연결·요금 발생은 대시보드에서 질문할 때 이루어집니다.
 
 ```bash
