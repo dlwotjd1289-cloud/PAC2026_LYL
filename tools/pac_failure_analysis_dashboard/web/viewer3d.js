@@ -78,7 +78,7 @@ function layout(){return {
   camera:initialCamera()}}
 }
 let base=[],shown=false,initDone=false,lastFrame='',scene=null,robotModel=null;
-let fallback=false,fallbackLive=null,fallbackCanvas=null;
+let fallback=false,fallbackLive=null,fallbackCanvas=null,fallbackIntegration=null;
 const orbit={azimuth:.6,elevation:.55,zoom:1.0,center:null};
 function qmul(a,b){
  const [x,y,z,w]=qnorm(a),[xx,yy,zz,ww]=qnorm(b);
@@ -164,7 +164,7 @@ function robotTrace(entities){
  customdata:robot.map(e=>e.name),hovertemplate:'%{customdata}<extra>관측 링크 중심</extra>',
  name:'관측된 로봇 링크 중심선 (메시 아님)',showlegend:false};
 }
-function actualBoxes(entities){
+function actualBoxes(entities,integration=null){
  const groups=new Map();
  for(const e of entities){
     if(!(/^box[_-]\d+$/i.test(e.name)||(integration?.boxes||[]).some(b=>b.id===e.name))||!Array.isArray(e.size))continue;
@@ -254,7 +254,7 @@ function setView(name){
 }
 async function update(live,integration){
  if(!initDone)await load();if(!shown)return;
- if(fallback){fallbackLive=live;renderFallback();return;}
+ if(fallback){fallbackLive=live;fallbackIntegration=integration;renderFallback();return;}
  if(redrawInFlight || Date.now()-lastDrawAt<UPDATE_MS)return;
  lastDrawAt=Date.now();redrawInFlight=true;
  const entities=freshEntities(live),liveOK=entities.length>0;
@@ -274,7 +274,7 @@ async function update(live,integration){
  if(liveRobot)txt('viewer3d-status',`로봇 ROS 실측 ${joints.length}개 관절 (${age.toFixed(1)}초 전)`+(liveOK?` · Gazebo 엔티티 ${entities.length}개`:' · Gazebo 위치 미수신'));
  else txt('viewer3d-status',robotModel?.reference_joints?.length?'참고 로봇 자세만 표시 중 (실측 아님)':'로봇 실측/참고 자세 모두 없음');
  if(liveOK){
-   traces.push(...actualBoxes(entities));
+   traces.push(...actualBoxes(entities,integration));
    const robot=robotTrace(entities);if(robot&&!liveRobot)traces.push(robot);
    const names=entities.filter(e=>!e.name.includes('::')||/suction_tcp/.test(e.name));
    if(names.length)traces.push(pointsTrace(names));
@@ -362,7 +362,7 @@ function renderFallback(){
   if(o.shape==='cylinder')fallbackCylinder(o,addFace);
  }
  const entities=freshEntities(fallbackLive);
- const actual=entities.filter(e=>(/^box[_-]\d+$/i.test(e.name)||(integration?.boxes||[]).some(b=>b.id===e.name))&&Array.isArray(e.size));
+ const actual=entities.filter(e=>(/^box[_-]\d+$/i.test(e.name)||(fallbackIntegration?.boxes||[]).some(b=>b.id===e.name))&&Array.isArray(e.size));
  for(const e of actual)fallbackBox({size:e.size,quaternion:e.quaternion||[0,0,0,1],
    position:[e.x,e.y,e.z],color:'#edbe79'},addFace);
  faces.sort((a,b)=>b.depth-a.depth);
